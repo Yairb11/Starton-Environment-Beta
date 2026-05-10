@@ -1,9 +1,9 @@
-
 from screeninfo import get_monitors
 import re
 import sys
 from PyQt6 import QtWidgets 
 from  MainWindow import *
+from App import *
 
 
 
@@ -42,35 +42,34 @@ def get_from_file():
     return chanks
 
 def get_apps(raw_info):
-    apps_path = {}
-    dirs_path = {} 
-    poses = {}
-    sizes = {}   
+    apps = []  
     apps_info = raw_info.split("\n")
     for app_raw_info in apps_info:
         app_info = app_raw_info.split(" ")
         
-        apps_path[app_info[0]] = app_info[1]
+        app = App(app_info[0])
+        app.set_app_path(app_info[1])
         
         if(app_info[2] == "None"):
-            dirs_path[app_info[0]] = None
+            app.set_dir_path(None)
         else:
-            dirs_path[app_info[0]] = app_info[2]
+            app.set_dir_path(app_info[2])
             
         pos_raw_info = app_info[3]
         pos_info = (pos_raw_info[1:-1]).split(",")
         pos = [int(pos_info[i]) for i in range(len(pos_info))]
-        poses[app_info[0]] = pos
+        app.set_pos(pos)
         
         size_raw_info = app_info[4]
         if(size_raw_info != "None"):
             size_info = (size_raw_info[1:-1]).split(",")
-            size = [int(size_info[i]) for i in range(len(size_info))]
+            app.set_size([int(size_info[i]) for i in range(len(size_info))])
         else:
-            size = None
-        sizes[app_info[0]] = size
+            app.set_size(None)
+            
+        apps.append(app)
   
-    return apps_path, dirs_path, poses, sizes
+    return apps
 
 def get_urls(raw_info):
     urls = {}
@@ -83,17 +82,15 @@ def get_urls(raw_info):
 def on_start():
     find_resolution()
     chanks = get_from_file()
-    apps_path, dirs_path, poses, sizes = get_apps(chanks["open_apps"])
+    apps = get_apps(chanks["open_apps"])
     urls = get_urls(chanks["oepn_urls"])
-
-    
+    return apps, urls
 
 if __name__ == "__main__":
-    on_start()
-    
-    app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow(screens)
+    apps, urls = on_start()
+    desktop_app = QtWidgets.QApplication(sys.argv)
+    window = MainWindow(screens, apps, urls)
     window.show()
-    app.exec()
+    desktop_app.exec()
 
 
