@@ -4,7 +4,7 @@ import sys
 from PyQt6 import QtWidgets 
 from  MainWindow import *
 from App import *
-
+from Links import *
 
 
 FILE_PATH = r"X:\code\python\on_start\on_start_info.txt"
@@ -83,13 +83,13 @@ def on_start():
     find_resolution()
     chanks = get_from_file()
     apps = get_apps(chanks["open_apps"])
-    urls = get_urls(chanks["oepn_urls"])
-    return apps, urls
+    links = Links(get_urls(chanks["oepn_urls"]))
+    return apps, links
 
 if __name__ == "__main__":
-    apps, urls = on_start()
+    apps, links = on_start()
     desktop_app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow(screens, apps, urls)
+    window = MainWindow(screens, apps, links)
     window.show()
     desktop_app.exec()
 

@@ -1,0 +1,16 @@
+<beta version>
+widgets to change info
+changing position of apps and sizes
+adding apps
+saving on_start
+creating exe file
+debuging -> 
+        check text file
+        user input
+        operation system
+
+<version 1.0>
+more operational widgets 
+icons
+color matching icons
+downloading exe file for the full project
