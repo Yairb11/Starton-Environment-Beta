@@ -4,7 +4,7 @@ import sys
 from PyQt6 import QtWidgets 
 from  MainWindow import *
 from App import *
-from Links import *
+from Link import *
 
 
 FILE_PATH = r"X:\code\python\on_start\on_start_info.txt"
@@ -71,19 +71,20 @@ def get_apps(raw_info):
   
     return apps
 
-def get_urls(raw_info):
-    urls = {}
-    urls_info = raw_info.split("\n")
-    for url_raw_info in urls_info:
-        url_info = url_raw_info.split(" ")
-        urls[url_info[0]] = url_info[1]
-    return urls
+def get_links(raw_info):
+    links = []
+    links_info = raw_info.split("\n")
+    for link_raw_info in links_info:
+        link_info = link_raw_info.split(" ")
+        link = Link(link_info[0], link_info[1])
+        links.append(link)
+    return links
 
 def on_start():
     find_resolution()
     chanks = get_from_file()
     apps = get_apps(chanks["open_apps"])
-    links = Links(get_urls(chanks["oepn_urls"]))
+    links = get_links(chanks["oepn_urls"])
     return apps, links
 
 if __name__ == "__main__":
