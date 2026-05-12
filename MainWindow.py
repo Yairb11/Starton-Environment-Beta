@@ -25,7 +25,7 @@ BROWSE_BTN_STYLE = """
 """ 
 PATH_INPUT_STYLE = "background-color: #333333; color: white; border: 1px solid #555; padding: 5px;"
 TITLE_STYLE = "color: white; font-size: 25px; font-weight: bold; margin-left: auto;"
-INFO_PANEL_STYLE = "background-color: #252526;"
+INFO_PANEL_STYLE = "background-color: #252526;" 
 LINK_ADD_STYLE = "background-color: #333; color: white; border: 1px solid #555; padding: 4px;"
 LINK_ADD_BTN_STYLE = "QPushButton { background-color: #0078d4; color: white; border: none; border-radius: 2px; } QPushButton:hover { background-color: #2b88d8; }"
 LINK_SCROLL_STYLE = """
@@ -36,6 +36,7 @@ LINK_SCROLL_STYLE = """
 """
 LINK_CONTAINER_STYLE = "background-color: #1e1e1e;"
 HEADER_STYLE = "color: #aaaaaa; font-size: 15px; font-weight: bold; margin-top: 8px;"
+BORDER_STYLE = "border-bottom: 2px solid white;"
 
 class MainWindow(QMainWindow):
     def __init__(self, screens, apps, links):
@@ -43,6 +44,7 @@ class MainWindow(QMainWindow):
         self.screens = screens
         self.apps = apps
         self.links = links
+        self.activated_app = None
         
         # --- WINDOW ---
         self.setWindowTitle("SetupGUI")
@@ -66,8 +68,8 @@ class MainWindow(QMainWindow):
         panel_layout.setSpacing(8)
         
         # --- TITLE ---
-        self.title_label = QLabel("Select an App")
-        self.title_label.setStyleSheet(TITLE_STYLE)
+        self.apps_title_label = QLabel("Select an App")
+        self.apps_title_label.setStyleSheet(TITLE_STYLE)
         
         # --- POSITION ---
         pos_layout = QGridLayout()
@@ -75,12 +77,15 @@ class MainWindow(QMainWindow):
         self.screen_spin = QSpinBox()
         self.screen_spin.setRange(1, len(self.screens)) 
         self.screen_spin.setStyleSheet(SPINBOX_STYLE)
+        self.screen_spin.valueChanged.connect(self.live_update_canvas)
         self.x_spin = QSpinBox()
         self.x_spin.setRange(0, 0) 
         self.x_spin.setStyleSheet(SPINBOX_STYLE)
+        self.x_spin.valueChanged.connect(self.live_update_canvas)
         self.y_spin = QSpinBox()
         self.y_spin.setRange(0, 0)
         self.y_spin.setStyleSheet(SPINBOX_STYLE)
+        self.y_spin.valueChanged.connect(self.live_update_canvas)
         screen_lbl = QLabel("Screen:")
         screen_lbl.setStyleSheet(LBL_STYLE)
         x_lbl = QLabel("X Position:")
@@ -101,9 +106,11 @@ class MainWindow(QMainWindow):
         self.width_spin = QSpinBox()
         self.width_spin.setRange(0, max_width) 
         self.width_spin.setStyleSheet(SPINBOX_STYLE)
+        self.width_spin.valueChanged.connect(self.live_update_canvas)
         self.height_spin = QSpinBox()
         self.height_spin.setRange(0, max_height)
         self.height_spin.setStyleSheet(SPINBOX_STYLE)
+        self.height_spin.valueChanged.connect(self.live_update_canvas)
         width_lbl = QLabel("Width:")
         width_lbl.setStyleSheet(LBL_STYLE)
         height_lbl = QLabel("Height:")
@@ -113,7 +120,35 @@ class MainWindow(QMainWindow):
         size_layout.addWidget(height_lbl, 1, 0)
         size_layout.addWidget(self.height_spin, 1, 1)
         
-        # --- LINKS ---
+        # --- APP PATH ---
+        self.app_path_input = QLineEdit()
+        self.app_path_input.setPlaceholderText("APP OPEN PATH (e.g., C:\\...)")
+        self.app_path_input.setStyleSheet(PATH_INPUT_STYLE)   
+        self.browse_app_path_btn = QPushButton("📂")
+        self.browse_app_path_btn.setToolTip("Browse for Executable")
+        self.browse_app_path_btn.setFixedSize(28, 28)
+        self.browse_app_path_btn.setStyleSheet(BROWSE_BTN_STYLE)
+        self.browse_app_path_btn.clicked.connect(self.browse_for_executable) 
+        app_path_layout = QHBoxLayout()
+        app_path_layout.setSpacing(5)
+        app_path_layout.addWidget(self.app_path_input)
+        app_path_layout.addWidget(self.browse_app_path_btn)
+        
+        # --- DIR PATH ---
+        self.dir_path_input = QLineEdit()
+        self.dir_path_input.setPlaceholderText("FROM FOLDER PATH (e.g., C:\\...)")
+        self.dir_path_input.setStyleSheet(PATH_INPUT_STYLE) 
+        self.browse_dir_path_btn = QPushButton("📂")
+        self.browse_dir_path_btn.setToolTip("Browse for Executable")
+        self.browse_dir_path_btn.setFixedSize(28, 28)
+        self.browse_dir_path_btn.setStyleSheet(BROWSE_BTN_STYLE)
+        self.browse_dir_path_btn.clicked.connect(self.browse_for_folder)         
+        dir_path_layout = QHBoxLayout()
+        dir_path_layout.setSpacing(5)
+        dir_path_layout.addWidget(self.dir_path_input)
+        dir_path_layout.addWidget(self.browse_dir_path_btn)
+        
+                # --- LINKS ---
         add_link_layout = QGridLayout()
         add_link_layout.setSpacing(5)
         self.link_name_input = QLineEdit()
@@ -140,37 +175,15 @@ class MainWindow(QMainWindow):
         self.link_list_layout.setContentsMargins(5, 5, 5, 5)        
         self.link_scroll_area.setWidget(self.link_list_container)
         self.add_existing_links()
+        links_title_label = QLabel("Start Up Links")
+        links_title_label.setStyleSheet(TITLE_STYLE)
         
-        # --- APP PATH ---
-        self.app_path_input = QLineEdit()
-        self.app_path_input.setPlaceholderText("APP OPEN PATH (e.g., C:\\...)")
-        self.app_path_input.setStyleSheet(PATH_INPUT_STYLE)   
-        self.browse_app_path_btn = QPushButton("📂")
-        self.browse_app_path_btn.setToolTip("Browse for Executable")
-        self.browse_app_path_btn.setFixedSize(28, 28)
-        self.browse_app_path_btn.setStyleSheet(BROWSE_BTN_STYLE)
-        self.browse_app_path_btn.clicked.connect(lambda: self.browse_for_executable(self.title_label.text())) 
-        app_path_layout = QHBoxLayout()
-        app_path_layout.setSpacing(5)
-        app_path_layout.addWidget(self.app_path_input)
-        app_path_layout.addWidget(self.browse_app_path_btn)
-        
-        # --- DIR PATH ---
-        self.dir_path_input = QLineEdit()
-        self.dir_path_input.setPlaceholderText("FROM FOLDER PATH (e.g., C:\\...)")
-        self.dir_path_input.setStyleSheet(PATH_INPUT_STYLE) 
-        self.browse_dir_path_btn = QPushButton("📂")
-        self.browse_dir_path_btn.setToolTip("Browse for Executable")
-        self.browse_dir_path_btn.setFixedSize(28, 28)
-        self.browse_dir_path_btn.setStyleSheet(BROWSE_BTN_STYLE)
-        self.browse_dir_path_btn.clicked.connect(lambda: self.browse_for_folder(self.title_label.text()))         
-        dir_path_layout = QHBoxLayout()
-        dir_path_layout.setSpacing(5)
-        dir_path_layout.addWidget(self.dir_path_input)
-        dir_path_layout.addWidget(self.browse_dir_path_btn)
+        # --- BORDER ---
+        border_lbl = QLabel("")
+        border_lbl.setStyleSheet(BORDER_STYLE)
         
         # --- LAYOUT ---
-        panel_layout.addWidget(self.title_label)
+        panel_layout.addWidget(self.apps_title_label)
         panel_layout.addWidget(self.create_header("APP PATH"))
         panel_layout.addLayout(app_path_layout)
         panel_layout.addWidget(self.create_header("FOLDER PATH"))
@@ -179,7 +192,8 @@ class MainWindow(QMainWindow):
         panel_layout.addLayout(pos_layout)
         panel_layout.addWidget(self.create_header("WINDOW STATE"))
         panel_layout.addLayout(size_layout) 
-        panel_layout.addWidget(self.create_header("START UP LINKS"))
+        panel_layout.addWidget(border_lbl)
+        panel_layout.addWidget(links_title_label)
         panel_layout.addLayout(add_link_layout)
         panel_layout.addWidget(self.link_scroll_area, stretch=1)
         panel_layout.addStretch()
@@ -187,33 +201,44 @@ class MainWindow(QMainWindow):
         
 
     def update_info_panel(self, app): 
-        pos = app.get_pos()
-        screen_index = self.find_screen(pos)
-        screen = self.screens[screen_index] 
-        pos = [(pos[0] - screen.x), (pos[1] - screen.y)]
-        self.screen_spin.setValue(screen_index + 1)
-        self.x_spin.setValue(pos[0])
-        self.x_spin.setRange(0, screen.width)
-        self.y_spin.setValue(pos[1])
-        self.y_spin.setRange(0, screen.height)
+        if not(self.activated_app) or self.activated_app.get_name() != app.get_name():
+            self.activated_app = app
+            self.canvas.reset_app_view()
+            pos = app.get_pos()
+            screen_index = self.find_screen(pos)
+            screen = self.screens[screen_index] 
+            pos = [(pos[0] - screen.x), (pos[1] - screen.y)]
+            self.screen_spin.setValue(screen_index + 1)
+            self.x_spin.setValue(pos[0])
+            self.x_spin.setRange(0, screen.width)
+            self.y_spin.setValue(pos[1])
+            self.y_spin.setRange(0, screen.height)
+            
+            size = app.get_size()
+            if size:
+                self.width_spin.setValue(size[0])
+                self.height_spin.setValue(size[1])
+            else:
+                self.width_spin.setValue(screen.width)
+                self.height_spin.setValue(screen.height)
+            
+            self.apps_title_label.setText(f"{app.get_name()}") 
+            self.app_path_input.setText(f"{app.get_app_path()}")
+            self.dir_path_input.setText(f"{app.get_dir_path()}")
         
-        size = app.get_size()
-        if size:
-            self.width_spin.setValue(size[0])
-            self.height_spin.setValue(size[1])
-        else:
-            self.width_spin.setValue(screen.width)
-            self.height_spin.setValue(screen.height)
         
-        self.title_label.setText(f"{app.get_name()}") 
-        self.app_path_input.setText(f"{app.get_app_path()}")
-        self.dir_path_input.setText(f"{app.get_dir_path()}")
-        
-                    
-    def browse_for_executable(self, app_name) :
-        if app_name != "Select an App":
-            app = self.find_app(app_name)
-            path = app.get_app_path()
+    def live_update_canvas(self):
+        if self.activated_app:
+            x = self.x_spin.value()
+            y = self.y_spin.value()
+            width = self.width_spin.value()
+            height = self.height_spin.value()
+            screen = self.screen_spin.value()
+            self.canvas.change_app_view(self.activated_app, x, y, width, height, screen)
+                      
+    def browse_for_executable(self) :
+        if self.activated_app:
+            path = self.activated_app.get_app_path()
             
             options = QFileDialog.Option.DontResolveSymlinks
             
@@ -228,10 +253,9 @@ class MainWindow(QMainWindow):
                 normalized_path = os.path.normpath(file_path)
                 self.app_path_input.setText(normalized_path)
     
-    def browse_for_folder(self, app_name) :
-        if app_name != "Select an App":
-            app = self.find_app(app_name)
-            path = app.get_dir_path()
+    def browse_for_folder(self) :
+        if self.activated_app:
+            path = self.activated_app.get_dir_path()
             if not(path):
                 path = r"C:\\"
             
@@ -274,8 +298,8 @@ class MainWindow(QMainWindow):
         for monitor in self.screens:
             min_x = min(min_x, monitor.x)
             min_y = min(min_y, monitor.y)
-            max_x = min(max_x, monitor.x + monitor.width)
-            max_y = min(max_y, monitor.y + monitor.height)         
+            max_x = max(max_x, monitor.x + monitor.width)
+            max_y = max(max_y, monitor.y + monitor.height)         
         return max_x - min_x, max_y - min_y
     
     def add_new_link(self):

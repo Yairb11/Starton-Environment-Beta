@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt
 from App import *
 
 class InteractiveAppItem(QGraphicsRectItem):
-    def __init__(self, x, y, width, height, app, click_callback=None):
+    def __init__(self, x, y, width, height, app, z, click_callback=None):
         super().__init__(x, y, width, height)
         self.app = app
         self.click_callback = click_callback
@@ -18,7 +18,8 @@ class InteractiveAppItem(QGraphicsRectItem):
         
         self.setBrush(QBrush(self.default_color))
         self.setPen(QPen(Qt.GlobalColor.white, 1))
-
+        
+        self.setZValue(z)
 
     def hoverEnterEvent(self, event):
         self.setBrush(QBrush(self.hover_color))
@@ -31,8 +32,24 @@ class InteractiveAppItem(QGraphicsRectItem):
         super().mouseReleaseEvent(event)
     
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            if self.click_callback:
-                self.click_callback(self.app)
-                
         super().mousePressEvent(event)
+        click_pos = event.scenePos()
+        app_under_cursor = self.scene().items(click_pos)
+        front_app = app_under_cursor[0].get_app()
+        if event.button() == Qt.MouseButton.LeftButton:
+            if(front_app.get_name() == self.app.get_name()):
+                if self.click_callback:
+                    self.click_callback(self.app)
+        
+                
+        
+
+    def find_app_item(self, app):
+        return self.app.get_name() == app.get_name()
+    
+    def get_app(self):
+        return self.app
+    
+    
+    def set_app(self, app):
+        self.app = app
