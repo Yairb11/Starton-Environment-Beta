@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (QApplication, QGraphicsView, QGraphicsScene, QGraphicsRectItem,
-                            QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
+                            QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QCheckBox,
                             QLabel, QFrame, QLineEdit, QTextEdit, QPushButton, QMessageBox, QSpinBox, QGridLayout)
 from PyQt6.QtGui import QBrush, QColor, QPen, QPainter, QCursor
 from PyQt6.QtWidgets import QFileDialog
@@ -22,6 +22,9 @@ BROWSE_BTN_STYLE = """
     QPushButton:hover {
         background-color: #2b88d8;
     }
+    QPushButton:disabled {
+        background-color: #000000;
+    }
 """ 
 PATH_INPUT_STYLE = "background-color: #333333; color: white; border: 1px solid #555; padding: 5px;"
 TITLE_STYLE = "color: white; font-size: 25px; font-weight: bold; margin-left: auto;"
@@ -37,6 +40,27 @@ LINK_SCROLL_STYLE = """
 LINK_CONTAINER_STYLE = "background-color: #1e1e1e;"
 HEADER_STYLE = "color: #aaaaaa; font-size: 15px; font-weight: bold; margin-top: 8px;"
 BORDER_STYLE = "border-bottom: 2px solid white;"
+CHECK_STYLE = """QCheckBox {
+                spacing: 8px;
+                color: #cccccc; 
+                font-size: 13px; 
+                font-weight: bold;
+            }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border-radius: 9px; /* Makes it perfectly round */
+                border: 1px solid #888888;
+                background-color: transparent;
+            }
+            QCheckBox::indicator:checked {
+                border: 1px solid #0078D4; /* Windows 11 Blue Accent */
+                background-color: #0078D4;
+            }
+            QCheckBox::indicator:hover {
+                border-color: #005A9E;
+            }
+                                       """
 
 class MainWindow(QMainWindow):
     def __init__(self, screens, apps, links):
@@ -115,8 +139,12 @@ class MainWindow(QMainWindow):
         width_lbl.setStyleSheet(LBL_STYLE)
         height_lbl = QLabel("Height:")
         height_lbl.setStyleSheet(LBL_STYLE)
+        self.full_screen = QCheckBox("Full Screen")
+        self.full_screen.setStyleSheet(CHECK_STYLE)
+        self.full_screen.toggled.connect(self.handle_full_screen)
         size_layout.addWidget(width_lbl, 0, 0)
         size_layout.addWidget(self.width_spin, 0, 1)
+        size_layout.addWidget(self.full_screen, 0, 5)
         size_layout.addWidget(height_lbl, 1, 0)
         size_layout.addWidget(self.height_spin, 1, 1)
         
@@ -142,13 +170,18 @@ class MainWindow(QMainWindow):
         self.browse_dir_path_btn.setToolTip("Browse for Executable")
         self.browse_dir_path_btn.setFixedSize(28, 28)
         self.browse_dir_path_btn.setStyleSheet(BROWSE_BTN_STYLE)
-        self.browse_dir_path_btn.clicked.connect(self.browse_for_folder)         
+        self.browse_dir_path_btn.clicked.connect(self.browse_for_folder)      
+        self.disable_dir_path = QCheckBox("None")
+        self.disable_dir_path.setStyleSheet(CHECK_STYLE)
+        self.disable_dir_path.toggled.connect(self.handle_dir_disable)
         dir_path_layout = QHBoxLayout()
         dir_path_layout.setSpacing(5)
         dir_path_layout.addWidget(self.dir_path_input)
         dir_path_layout.addWidget(self.browse_dir_path_btn)
+        dir_path_layout.addWidget(self.disable_dir_path)
         
-                # --- LINKS ---
+        
+        # --- LINKS ---
         add_link_layout = QGridLayout()
         add_link_layout.setSpacing(5)
         self.link_name_input = QLineEdit()
@@ -203,38 +236,86 @@ class MainWindow(QMainWindow):
     def update_info_panel(self, app): 
         if not(self.activated_app) or self.activated_app.get_name() != app.get_name():
             self.activated_app = app
-            self.canvas.reset_app_view()
+            self.canvas.reset_app_view(app)
             pos = app.get_pos()
             screen_index = self.find_screen(pos)
             screen = self.screens[screen_index] 
             pos = [(pos[0] - screen.x), (pos[1] - screen.y)]
-            self.screen_spin.setValue(screen_index + 1)
-            self.x_spin.setValue(pos[0])
+            self.screen_spin.setValue(screen_index + 1) 
             self.x_spin.setRange(0, screen.width)
-            self.y_spin.setValue(pos[1])
             self.y_spin.setRange(0, screen.height)
+            self.x_spin.setValue(pos[0])
+            self.y_spin.setValue(pos[1])
             
             size = app.get_size()
             if size:
+                self.full_screen.setChecked(False)
                 self.width_spin.setValue(size[0])
                 self.height_spin.setValue(size[1])
             else:
+                self.full_screen.setChecked(True)
                 self.width_spin.setValue(screen.width)
                 self.height_spin.setValue(screen.height)
             
             self.apps_title_label.setText(f"{app.get_name()}") 
             self.app_path_input.setText(f"{app.get_app_path()}")
-            self.dir_path_input.setText(f"{app.get_dir_path()}")
+            
+            if(app.get_dir_path()):
+                self.disable_dir_path.setChecked(False)
+                self.dir_path_input.setText(f"{app.get_dir_path()}")
+            else:
+                self.disable_dir_path.setChecked(True)
         
         
     def live_update_canvas(self):
-        if self.activated_app:
+        if self.activated_app: 
             x = self.x_spin.value()
             y = self.y_spin.value()
             width = self.width_spin.value()
             height = self.height_spin.value()
             screen = self.screen_spin.value()
             self.canvas.change_app_view(self.activated_app, x, y, width, height, screen)
+    
+    def handle_full_screen(self, checked):
+        if self.activated_app:
+            self.width_spin.setDisabled(checked)
+            self.height_spin.setDisabled(checked)
+            self.x_spin.setDisabled(checked)
+            self.y_spin.setDisabled(checked)
+            screen = self.screen_spin.value()
+            monitor = self.screens[screen - 1]
+            if checked:
+                self.width_spin.setValue(monitor.width)
+                self.height_spin.setValue(monitor.height)
+                self.x_spin.setValue(0)
+                self.y_spin.setValue(0)
+                self.canvas.change_app_view(self.activated_app, 0, 0, monitor.width, monitor.height, screen)
+            else:
+                pos = self.activated_app.get_pos()
+                pos = [(pos[0] - monitor.x), (pos[1] - monitor.y)]
+                self.x_spin.setValue(pos[0])
+                self.x_spin.setRange(0, monitor.width)
+                self.y_spin.setValue(pos[1])
+                self.y_spin.setRange(0, monitor.height)
+                size = self.activated_app.get_size()
+                if size:
+                    self.width_spin.setValue(size[0])
+                    self.height_spin.setValue(size[1])
+                else:
+                    self.width_spin.setValue(monitor.width)
+                    self.height_spin.setValue(monitor.height)
+        
+    def handle_dir_disable(self, checked):
+        if self.activated_app:
+            self.dir_path_input.setDisabled(checked)
+            self.browse_dir_path_btn.setDisabled(checked)
+            if checked:
+                self.dir_path_input.setText("None")
+            else:
+                if(self.activated_app.get_dir_path()):
+                    self.dir_path_input.setText(self.activated_app.get_dir_path())
+                else:
+                    self.dir_path_input.setText("C:\\")
                       
     def browse_for_executable(self) :
         if self.activated_app:
@@ -267,13 +348,6 @@ class MainWindow(QMainWindow):
             if file_path:
                 normalized_path = os.path.normpath(file_path)
                 self.dir_path_input.setText(normalized_path)
-                
-        
-    def find_app(self, app_name):
-        for app in self.apps:
-            if app.get_name() == app_name:
-                return app
-        return None
         
     def get_links_list(self):
         return f"{str(self.links)}"

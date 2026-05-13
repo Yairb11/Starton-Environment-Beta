@@ -41,7 +41,7 @@ class MonitorCanvas(QGraphicsView):
         
         
         
-    def reset_app_view(self):  
+    def reset_app_view(self, app_selected):  
         for z, view in enumerate(self.scene.items()):
             if(type(view) == self.app_type):
                 app = view.get_app()
@@ -54,6 +54,7 @@ class MonitorCanvas(QGraphicsView):
                     screen_index = self.find_screen(pos)
                     monitor = self.screens[screen_index]
                     view.setRect((monitor.x - self.x_cor) // self.down_by, (monitor.y - self.y_cor) // self.down_by, (monitor.width) // self.down_by, (monitor.height) // self.down_by)
+                view.set_color(view.find_app_item(app_selected))
                 
 
     

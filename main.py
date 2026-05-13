@@ -66,7 +66,6 @@ def get_apps(raw_info):
             app.set_size([int(size_info[i]) for i in range(len(size_info))])
         else:
             app.set_size(None)
-            
         apps.append(app)
   
     return apps

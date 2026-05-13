@@ -15,6 +15,8 @@ class InteractiveAppItem(QGraphicsRectItem):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.default_color = QColor("#0078d4")
         self.hover_color = QColor("#2b88d8") 
+        self.selected_color = QColor("#6aaee9") 
+        self.is_selected = False
         
         self.setBrush(QBrush(self.default_color))
         self.setPen(QPen(Qt.GlobalColor.white, 1))
@@ -22,10 +24,12 @@ class InteractiveAppItem(QGraphicsRectItem):
         self.setZValue(z)
 
     def hoverEnterEvent(self, event):
-        self.setBrush(QBrush(self.hover_color))
+        if(not self.is_selected):
+            self.setBrush(QBrush(self.hover_color))
         super().hoverEnterEvent(event)
     def hoverLeaveEvent(self, event):
-        self.setBrush(QBrush(self.default_color))
+        if(not self.is_selected):
+            self.setBrush(QBrush(self.default_color))
         super().hoverLeaveEvent(event)
         
     def mouseReleaseEvent(self, event):
@@ -40,16 +44,20 @@ class InteractiveAppItem(QGraphicsRectItem):
             if(front_app.get_name() == self.app.get_name()):
                 if self.click_callback:
                     self.click_callback(self.app)
-        
-                
-        
-
+            
     def find_app_item(self, app):
         return self.app.get_name() == app.get_name()
     
     def get_app(self):
         return self.app
     
-    
     def set_app(self, app):
         self.app = app
+        
+    def set_color(self, is_selected):
+        self.is_selected = is_selected
+        if(self.is_selected):
+            self.setBrush(QBrush(self.selected_color))
+        else:
+            self.setBrush(QBrush(self.default_color))
+            
