@@ -35,4 +35,24 @@ class App:
         return self.size
     
     def __str__(self):
-        return f"{self.name}: {self.app_path}, {self.dir_path}, {self.pos}, {self.size}"
+        pos_str = f"[{self.pos[0]},{self.pos[1]}]"
+        if(self.size):
+            size_str = f"[{self.size[0]},{self.size[1]}]"
+        else:
+            size_str = "None"
+        return f"{self.name} {self.app_path} {self.dir_path} {pos_str} {size_str}"
+    
+    def change_app(self, name, app_path, dir_path, pos, size):
+        self.name = name
+        self.app_path = app_path
+        self.dir_path = dir_path
+        self.pos[0] = pos[0]
+        self.pos[1] = pos[1]
+        self.size[0] = size[0]
+        self.size[1] = size[1]
+    
+    def __eq__(self, other):
+        if not isinstance(other, App):
+            return NotImplemented
+        return str(self) == str(other)
+        

@@ -19,6 +19,7 @@ class LinkBlock(QFrame):
     def __init__(self, link, delete_callback):
         # --- FRAME LINK --- 
         super().__init__()
+        self.link = link
         self.setStyleSheet(LINK_FRAME_STYLE)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
@@ -26,7 +27,7 @@ class LinkBlock(QFrame):
         text_layout.setSpacing(2)
         name_lbl = QLabel(link.get_name())
         name_lbl.setStyleSheet(LINK_NAME_STYLE)
-        link_lbl = QLabel(f'<a href="{link.get_link()}" style="{LINK_LINK_HTML_STYLE}">{link.get_link()}</a>')
+        link_lbl = QLabel(f'<a href="{self.link.get_link()}" style="{LINK_LINK_HTML_STYLE}">{self.link.get_link()}</a>')
         link_lbl.setOpenExternalLinks(True)
         link_lbl.setStyleSheet(LINK_LINK_STYLE)
         text_layout.addWidget(name_lbl)
@@ -42,3 +43,6 @@ class LinkBlock(QFrame):
         # --- LAYOUT ---
         layout.addLayout(text_layout)
         layout.addWidget(self.del_btn)
+    
+    def get_link(self):
+        return self.link

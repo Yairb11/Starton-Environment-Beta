@@ -46,7 +46,7 @@ class InteractiveAppItem(QGraphicsRectItem):
                     self.click_callback(self.app)
             
     def find_app_item(self, app):
-        return self.app.get_name() == app.get_name()
+        return self.app == app
     
     def get_app(self):
         return self.app

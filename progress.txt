@@ -19,7 +19,7 @@ canvas ui ->
         4)לעשות שאפשר למחוק ישירות בתאצ'
 debuging -> 
         check text file
-        user input
+        user inputs
         operation system
 
 <version 1.0>

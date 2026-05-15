@@ -55,7 +55,15 @@ class MonitorCanvas(QGraphicsView):
                     monitor = self.screens[screen_index]
                     view.setRect((monitor.x - self.x_cor) // self.down_by, (monitor.y - self.y_cor) // self.down_by, (monitor.width) // self.down_by, (monitor.height) // self.down_by)
                 view.set_color(view.find_app_item(app_selected))
-                
+    
+    def delete_app_view(self, app_deleted):
+        delete_view = None
+        for view in self.scene.items():
+            if(type(view) == self.app_type):
+                if(view.find_app_item(app_deleted)):
+                    delete_view = view
+        if delete_view:
+            self.scene.removeItem(delete_view)
 
     
     def get_correction(self):
