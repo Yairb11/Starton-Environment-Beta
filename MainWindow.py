@@ -23,8 +23,16 @@ INFO_PANEL_BTN_STYLE = """
                 background-color: #0078d4;
             }
         """
-TITLE_STYLE = "color: white; font-size: 25px; font-weight: bold; margin-left: auto;"
-HEADER_STYLE = "color: #aaaaaa; font-size: 15px; font-weight: bold; margin-top: 8px;"
+TITLE_STYLE = "color: white; font-size: 25px; font-weight: bold;"
+TITLE_BTN_STYLE =  """
+    QPushButton {
+        font-size: 35px;
+    }
+    QPushButton:hover {
+        border: 1px solid #0078d4
+    }
+""" 
+HEADER_STYLE = "color: #aaaaaa; font-size: 16px; font-weight: bold; margin-top: 8px;"
 PATH_INPUT_STYLE = "background-color: #333333; color: white; border: 1px solid #555; padding: 5px;"
 BROWSE_BTN_STYLE = """
     QPushButton {
@@ -150,7 +158,7 @@ class MainWindow(QMainWindow):
         
         # --- INFO_PANEL ---
         panel_layout = QVBoxLayout(self.info_panel)
-        panel_layout.setContentsMargins(0, 0, 0, 0)
+        panel_layout.setContentsMargins(15, 20, 15, 20)
         self.panel_stack = QStackedWidget()
         panel_layout.addWidget(self.panel_stack)
         
@@ -158,8 +166,8 @@ class MainWindow(QMainWindow):
         self.empty_widget = QWidget()
         empty_layout = QVBoxLayout(self.empty_widget)
         empty_layout.setContentsMargins(15, 20, 15, 20)
-        self.empty_label = QLabel("Select an app\nfrom the canvas to edit.")
-        self.empty_label.setStyleSheet("color: #777777; font-size: 16px; font-weight: bold;")
+        self.empty_label = QLabel("No App is selected\nPlease select an App")
+        self.empty_label.setStyleSheet(HEADER_STYLE)
         empty_layout.setSpacing(8)
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
@@ -170,23 +178,40 @@ class MainWindow(QMainWindow):
         editor_layout.setSpacing(8)
         
         # --- TITLE ---
+        app_title_layout = QHBoxLayout()
+        app_title_layout.setSpacing(5)
+        app_title_layout.setContentsMargins(40, 0, 0, 0)
         self.apps_title_label = QLabel("Select an App")
         self.apps_title_label.setStyleSheet(TITLE_STYLE)
+        app_title_arrows_layout = QVBoxLayout()
+        app_title_arrows_layout.setSpacing(5)
+        app_title_up_btn = QPushButton("🔼")
+        app_title_up_btn.setFixedSize(28, 28)
+        app_title_up_btn.setStyleSheet(TITLE_BTN_STYLE)
+        app_title_up_btn.clicked.connect(self.change_app_up) 
+        app_title_down_btn = QPushButton("🔽")
+        app_title_down_btn.setFixedSize(28, 28)
+        app_title_down_btn.setStyleSheet(TITLE_BTN_STYLE)
+        app_title_down_btn.clicked.connect(self.change_app_down) 
+        app_title_arrows_layout.addWidget(app_title_up_btn)
+        app_title_arrows_layout.addWidget(app_title_down_btn)
+        app_title_layout.addLayout(app_title_arrows_layout)
+        app_title_layout.addWidget(self.apps_title_label)
         
         # --- APP PATH ---
         self.app_path_input = QLineEdit()
         self.app_path_input.setPlaceholderText("APP OPEN PATH (e.g., C:\\...)")
         self.app_path_input.setStyleSheet(PATH_INPUT_STYLE)   
-        self.browse_app_path_btn = QPushButton("📂")
-        self.browse_app_path_btn.setToolTip("Browse for Executable")
-        self.browse_app_path_btn.setFixedSize(28, 28)
-        self.browse_app_path_btn.setStyleSheet(BROWSE_BTN_STYLE)
-        self.browse_app_path_btn.clicked.connect(self.browse_for_executable) 
+        browse_app_path_btn = QPushButton("📂")
+        browse_app_path_btn.setToolTip("Browse for Executable")
+        browse_app_path_btn.setFixedSize(28, 28)
+        browse_app_path_btn.setStyleSheet(BROWSE_BTN_STYLE)
+        browse_app_path_btn.clicked.connect(self.browse_for_executable) 
         path_lbl = self.create_header("APP PATH")
         app_path_layout = QHBoxLayout()
         app_path_layout.setSpacing(5)
         app_path_layout.addWidget(self.app_path_input)
-        app_path_layout.addWidget(self.browse_app_path_btn)
+        app_path_layout.addWidget(browse_app_path_btn)
         
         # --- DIR PATH ---
         self.dir_path_input = QLineEdit()
@@ -312,7 +337,6 @@ class MainWindow(QMainWindow):
         empty_layout.addWidget(self.empty_label)
         
         # --- EDITOR LAYOUT ---
-        editor_layout.addWidget(self.apps_title_label)
         editor_layout.addWidget(path_lbl)
         editor_layout.addLayout(app_path_layout)
         editor_layout.addWidget(dir_lbl)
@@ -328,6 +352,7 @@ class MainWindow(QMainWindow):
         self.panel_stack.addWidget(self.empty_widget)
         self.panel_stack.addWidget(self.editor_widget)
         self.panel_stack.setCurrentIndex(0)  
+        panel_layout.addLayout(app_title_layout)
         panel_layout.addWidget(self.panel_stack, stretch=1)
         panel_layout.addWidget(border_lbl)
         panel_layout.addWidget(links_title_label)
@@ -407,6 +432,35 @@ class MainWindow(QMainWindow):
             height = self.height_spin.value()
             screen = self.screen_spin.value()
             self.canvas.change_app_view(self.activated_app, x, y, width, height, screen)
+    
+    def change_app_up(self):
+        if not self.activated_app:
+            if(len(self.apps) > 0):
+                self.update_info_panel(self.apps[0])
+        else:
+            index = 0
+            app_count = len(self.apps)
+            while index < app_count:
+                if(self.activated_app == self.apps[index]):
+                    break
+                index += 1
+            if(index < app_count):
+                self.update_info_panel(self.apps[(index + 1) % app_count])
+    
+    def change_app_down(self):
+        if not self.activated_app:
+            if(len(self.apps) > 0):
+                self.update_info_panel(self.apps[-1])
+        else:
+            index = 0
+            app_count = len(self.apps)
+            while index < app_count:
+                if(self.activated_app == self.apps[index]):
+                    break
+                index += 1
+            if(index < app_count):
+                self.update_info_panel(self.apps[(index - 1) % app_count])
+        
     
     def handle_full_screen(self, checked):
         if self.activated_app:
@@ -509,6 +563,7 @@ class MainWindow(QMainWindow):
                 del self.apps[index]
             self.canvas.delete_app_view(self.activated_app)
             self.activated_app = None
+            self.apps_title_label.setText("Select an App")
             self.panel_stack.setCurrentIndex(0)
             self.writing_file()
     
