@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import (QApplication, QGraphicsView, QGraphicsScene, QGraphicsRectItem,
                             QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QCheckBox,
-                            QLabel, QFrame, QLineEdit, QTextEdit, QPushButton, QMessageBox, QSpinBox, QGridLayout)
-from PyQt6.QtGui import QBrush, QColor, QPen, QPainter, QCursor
+                            QLabel, QFrame, QLineEdit, QTextEdit, QPushButton, QMessageBox, 
+                            QSpinBox, QGridLayout, QFileDialog, QStackedWidget)
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QPoint
 from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtCore import Qt
 from App import *
 from MonitorCanvas import *
 from Link import *
@@ -11,11 +11,21 @@ from LinkBlock import *
 from SavingFile import *
 import os
 
-SPINBOX_STYLE = """
-    QSpinBox { background-color: #333333; color: white; border: 1px solid #555; padding: 4px; font-size: 13px; }
-    QSpinBox::up-button, QSpinBox::down-button { background-color: #444; width: 16px; }
-"""
-LBL_STYLE = "color: #cccccc; font-size: 13px; font-weight: bold;"
+INFO_PANEL_STYLE = "background-color: #252526;" 
+INFO_PANEL_BTN_STYLE = """
+            QPushButton {
+                background-color: #333333; 
+                color: white; 
+                border-radius: 4px;
+                font-size: 18px;
+            }
+            QPushButton:hover {
+                background-color: #0078d4;
+            }
+        """
+TITLE_STYLE = "color: white; font-size: 25px; font-weight: bold; margin-left: auto;"
+HEADER_STYLE = "color: #aaaaaa; font-size: 15px; font-weight: bold; margin-top: 8px;"
+PATH_INPUT_STYLE = "background-color: #333333; color: white; border: 1px solid #555; padding: 5px;"
 BROWSE_BTN_STYLE = """
     QPushButton {
         background-color: #0078d4; color: white; border: none; font-size: 14px; border-radius: 2px;
@@ -27,20 +37,11 @@ BROWSE_BTN_STYLE = """
         background-color: #000000;
     }
 """ 
-PATH_INPUT_STYLE = "background-color: #333333; color: white; border: 1px solid #555; padding: 5px;"
-TITLE_STYLE = "color: white; font-size: 25px; font-weight: bold; margin-left: auto;"
-INFO_PANEL_STYLE = "background-color: #252526;" 
-LINK_ADD_STYLE = "background-color: #333; color: white; border: 1px solid #555; padding: 4px;"
-LINK_ADD_BTN_STYLE = "QPushButton { background-color: #0078d4; color: white; border: none; border-radius: 2px; } QPushButton:hover { background-color: #2b88d8; }"
-LINK_SCROLL_STYLE = """
-    QScrollArea { border: 1px solid #444; background-color: #1e1e1e; }
-    QScrollBar:vertical { background: #252526; width: 10px; }
-    QScrollBar::handle:vertical { background: #555; min-height: 20px; border-radius: 5px; }
-    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+LBL_STYLE = "color: #cccccc; font-size: 13px; font-weight: bold;"
+SPINBOX_STYLE = """
+    QSpinBox { background-color: #333333; color: white; border: 1px solid #555; padding: 4px; font-size: 13px; }
+    QSpinBox::up-button, QSpinBox::down-button { background-color: #444; width: 16px; }
 """
-LINK_CONTAINER_STYLE = "background-color: #1e1e1e;"
-HEADER_STYLE = "color: #aaaaaa; font-size: 15px; font-weight: bold; margin-top: 8px;"
-BORDER_STYLE = "border-bottom: 2px solid white;"
 CHECK_STYLE = """QCheckBox {
                 spacing: 8px;
                 color: #cccccc; 
@@ -62,6 +63,16 @@ CHECK_STYLE = """QCheckBox {
                 border-color: #005A9E;
             }
                                        """
+BORDER_STYLE = "border-bottom: 2px solid white;"
+LINK_ADD_STYLE = "background-color: #333; color: white; border: 1px solid #555; padding: 4px;"
+LINK_ADD_BTN_STYLE = "QPushButton { background-color: #0078d4; color: white; border: none; border-radius: 2px; } QPushButton:hover { background-color: #2b88d8; }"
+LINK_SCROLL_STYLE = """
+    QScrollArea { border: 1px solid #444; background-color: #1e1e1e; }
+    QScrollBar:vertical { background: #252526; width: 10px; }
+    QScrollBar::handle:vertical { background: #555; min-height: 20px; border-radius: 5px; }
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+"""
+LINK_CONTAINER_STYLE = "background-color: #1e1e1e;"
 DELETE_BTN_STYLE = """
     QPushButton {
         background-color: transparent; 
@@ -98,6 +109,8 @@ SAVE_BTN_STYLE = """
     }
 """
 
+MAX_INFO_PANEL_WIDTH = 500
+
 class MainWindow(QMainWindow):
     def __init__(self, screens, apps, links, saving_file):
         super().__init__()
@@ -106,6 +119,7 @@ class MainWindow(QMainWindow):
         self.links = links
         self.saving_file = saving_file
         self.activated_app = None
+        self.is_panel_open = True
         
         # --- WINDOW ---
         self.setWindowTitle("SetupGUI")
@@ -123,10 +137,37 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.canvas, stretch=3)
         self.info_panel = QFrame()
         self.info_panel.setStyleSheet(INFO_PANEL_STYLE)
-        self.info_panel.setFixedWidth(500)
+        self.info_panel.setMaximumWidth(MAX_INFO_PANEL_WIDTH) 
+        self.info_panel.setMinimumWidth(0)
+        self.info_panel.setContentsMargins(0, 0, 0, 0)
+        self.info_panel_toggle_btn = QPushButton("☰", central_widget)
+        self.info_panel_toggle_btn.setFixedSize(35, 35)
+        self.info_panel_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.info_panel_toggle_btn.setToolTip("Toggle Info Panel")
+        self.info_panel_toggle_btn.setStyleSheet(INFO_PANEL_BTN_STYLE)
+        self.info_panel_toggle_btn.clicked.connect(self.toggle_info_panel)
+        self.info_panel_toggle_btn.move(primary_screen.width - MAX_INFO_PANEL_WIDTH + 30, 10) 
+        
+        # --- INFO_PANEL ---
         panel_layout = QVBoxLayout(self.info_panel)
-        panel_layout.setContentsMargins(15, 20, 15, 20)
-        panel_layout.setSpacing(8)
+        panel_layout.setContentsMargins(0, 0, 0, 0)
+        self.panel_stack = QStackedWidget()
+        panel_layout.addWidget(self.panel_stack)
+        
+        # --- EMPTY INFO PANEL ---
+        self.empty_widget = QWidget()
+        empty_layout = QVBoxLayout(self.empty_widget)
+        empty_layout.setContentsMargins(15, 20, 15, 20)
+        self.empty_label = QLabel("Select an app\nfrom the canvas to edit.")
+        self.empty_label.setStyleSheet("color: #777777; font-size: 16px; font-weight: bold;")
+        empty_layout.setSpacing(8)
+        self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # --- EDITOR INFO PANEL ---
+        self.editor_widget = QWidget()
+        editor_layout = QVBoxLayout(self.editor_widget)
+        editor_layout.setContentsMargins(15, 20, 15, 20)
+        editor_layout.setSpacing(8)
         
         # --- TITLE ---
         self.apps_title_label = QLabel("Select an App")
@@ -221,9 +262,21 @@ class MainWindow(QMainWindow):
         size_layout.addWidget(height_lbl, 1, 0)
         size_layout.addWidget(self.height_spin, 1, 1)
         
-        # --- FIRST BORDER ---
-        border1_lbl = QLabel("")
-        border1_lbl.setStyleSheet(BORDER_STYLE)
+        # --- SAVING ---
+        saving_layout = QHBoxLayout()
+        saving_layout.setSpacing(10)
+        self.saving_btn = QPushButton("SAVE")
+        self.saving_btn.clicked.connect(self.saving_app)
+        self.saving_btn.setStyleSheet(SAVE_BTN_STYLE)
+        self.deleting_btn = QPushButton("DELETE")
+        self.deleting_btn.clicked.connect(self.deleting_app)
+        self.deleting_btn.setStyleSheet(DELETE_BTN_STYLE)
+        saving_layout.addWidget(self.deleting_btn)
+        saving_layout.addWidget(self.saving_btn)
+        
+        # --- BORDER ---
+        border_lbl = QLabel("")
+        border_lbl.setStyleSheet(BORDER_STYLE)
         
         # --- LINKS ---
         add_link_layout = QGridLayout()
@@ -255,44 +308,64 @@ class MainWindow(QMainWindow):
         links_title_label = QLabel("Start Up Links")
         links_title_label.setStyleSheet(TITLE_STYLE)
         
-        # --- SECOND BORDER ---
-        border2_lbl = QLabel("")
-        border2_lbl.setStyleSheet(BORDER_STYLE)
+        # --- EMPTY LAYOUT ---
+        empty_layout.addWidget(self.empty_label)
         
-        # --- SAVING ---
-        saving_layout = QHBoxLayout()
-        saving_layout.setSpacing(10)
-        self.saving_btn = QPushButton("SAVE")
-        self.saving_btn.clicked.connect(self.saving_app)
-        self.saving_btn.setStyleSheet(SAVE_BTN_STYLE)
-        self.deleting_btn = QPushButton("DELETE")
-        self.deleting_btn.clicked.connect(self.deleting_app)
-        self.deleting_btn.setStyleSheet(DELETE_BTN_STYLE)
-        saving_layout.addWidget(self.deleting_btn)
-        saving_layout.addWidget(self.saving_btn)
+        # --- EDITOR LAYOUT ---
+        editor_layout.addWidget(self.apps_title_label)
+        editor_layout.addWidget(path_lbl)
+        editor_layout.addLayout(app_path_layout)
+        editor_layout.addWidget(dir_lbl)
+        editor_layout.addLayout(dir_path_layout)
+        editor_layout.addWidget(position_lbl)
+        editor_layout.addLayout(pos_layout)
+        editor_layout.addWidget(size_lbl)
+        editor_layout.addLayout(size_layout) 
+        editor_layout.addLayout(saving_layout)
+        editor_layout.addStretch()
         
-        # --- LAYOUT INFO_PANEL---
-        panel_layout.addWidget(self.apps_title_label)
-        panel_layout.addWidget(path_lbl)
-        panel_layout.addLayout(app_path_layout)
-        panel_layout.addWidget(dir_lbl)
-        panel_layout.addLayout(dir_path_layout)
-        panel_layout.addWidget(position_lbl)
-        panel_layout.addLayout(pos_layout)
-        panel_layout.addWidget(size_lbl)
-        panel_layout.addLayout(size_layout) 
-        panel_layout.addWidget(border1_lbl)
+        # --- FINAL LAYOUT --- 
+        self.panel_stack.addWidget(self.empty_widget)
+        self.panel_stack.addWidget(self.editor_widget)
+        self.panel_stack.setCurrentIndex(0)  
+        panel_layout.addWidget(self.panel_stack, stretch=1)
+        panel_layout.addWidget(border_lbl)
         panel_layout.addWidget(links_title_label)
         panel_layout.addLayout(add_link_layout)
         panel_layout.addWidget(self.link_scroll_area, stretch=1)
-        panel_layout.addWidget(border2_lbl)
-        panel_layout.addLayout(saving_layout)
-        panel_layout.addStretch()
         main_layout.addWidget(self.info_panel, stretch=1)
+        self.toggle_info_panel()
         
-
+    def toggle_info_panel(self):
+        self.is_panel_open = not self.is_panel_open
+        if not(self.is_panel_open):
+            target_panel_width = 0
+            target_btn_x = self.width() - self.info_panel_toggle_btn.width() - 15
+            btn_str = "⚙"
+        else:
+            target_panel_width = MAX_INFO_PANEL_WIDTH
+            target_btn_x = self.width() - target_panel_width + 30
+            btn_str = "☰"
+        info_panel_anim = QPropertyAnimation(self.info_panel, b"maximumWidth")
+        info_panel_anim.setDuration(350)
+        info_panel_anim.setStartValue(self.info_panel.width())
+        info_panel_anim.setEndValue(target_panel_width)
+        info_panel_anim.setEasingCurve(QEasingCurve.Type.InOutQuart)
+        info_panel_btn_anim = QPropertyAnimation(self.info_panel_toggle_btn, b"pos")
+        info_panel_btn_anim.setDuration(350)
+        info_panel_btn_anim.setStartValue(self.info_panel_toggle_btn.pos())
+        info_panel_btn_anim.setEndValue(QPoint(target_btn_x, 10))
+        info_panel_btn_anim.setEasingCurve(QEasingCurve.Type.InOutQuart)
+        self.anim_group = QParallelAnimationGroup()
+        self.anim_group.addAnimation(info_panel_anim)
+        self.anim_group.addAnimation(info_panel_btn_anim)
+        self.anim_group.start()
+        self.info_panel_toggle_btn.setText(btn_str)
+        self.info_panel_toggle_btn.raise_()
+        
     def update_info_panel(self, app): 
         if not(self.activated_app) or self.activated_app.get_name() != app.get_name():
+            self.panel_stack.setCurrentIndex(1)
             self.activated_app = app
             self.canvas.reset_app_view(app)
             pos = app.get_pos()
@@ -323,8 +396,9 @@ class MainWindow(QMainWindow):
                 self.dir_path_input.setText(f"{app.get_dir_path()}")
             else:
                 self.disable_dir_path.setChecked(True)
-        
-        
+            if(not self.is_panel_open):
+                self.toggle_info_panel()
+                
     def live_update_canvas(self):
         if self.activated_app: 
             x = self.x_spin.value()
@@ -437,10 +511,12 @@ class MainWindow(QMainWindow):
                 del self.apps[index]
             self.canvas.delete_app_view(self.activated_app)
             self.activated_app = None
+            self.panel_stack.setCurrentIndex(0)
             self.writing_file()
     
     def writing_file(self):
-        self.saving_file.write_file(self.apps, self.links)
+        if False:
+            self.saving_file.write_file(self.apps, self.links)
                 
     def get_links_list(self):
         return f"{str(self.links)}"
@@ -511,4 +587,3 @@ class MainWindow(QMainWindow):
         monitor = self.screens[screen]
         pos = [x + monitor.x, y + monitor.y]
         return pos
-    
