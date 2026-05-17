@@ -452,9 +452,7 @@ class MainWindow(QMainWindow):
     def browse_for_executable(self) :
         if self.activated_app:
             path = self.activated_app.get_app_path()
-            
             options = QFileDialog.Option.DontResolveSymlinks
-            
             file_path, _ = QFileDialog.getOpenFileName(
                 self,
                 "Select Startup App",
