@@ -1,11 +1,11 @@
 import re
 class App:
-    def __init__(self, name):
+    def __init__(self, name, path = "", dir = "", pos = [0, 0], size = [0, 0]):
         self.name = name
-        self.app_path = ""
-        self.dir_path = ""
-        self.pos = [0, 0]
-        self.size = [0, 0]
+        self.app_path = path
+        self.dir_path = dir
+        self.pos = pos
+        self.size = size
     
     def get_name(self):
         return self.name
@@ -46,10 +46,12 @@ class App:
         self.name = name
         self.app_path = app_path
         self.dir_path = dir_path
-        self.pos[0] = pos[0]
-        self.pos[1] = pos[1]
-        self.size[0] = size[0]
-        self.size[1] = size[1]
+        self.pos = []
+        self.pos.append(pos[0])
+        self.pos.append(pos[1])
+        self.size = []
+        self.size.append(size[0])
+        self.size.append(size[1])
     
     def __eq__(self, other):
         if not isinstance(other, App):

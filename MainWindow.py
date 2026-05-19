@@ -181,8 +181,13 @@ class MainWindow(QMainWindow):
         app_title_layout = QHBoxLayout()
         app_title_layout.setSpacing(5)
         app_title_layout.setContentsMargins(40, 0, 0, 0)
-        self.apps_title_label = QLabel("Select an App")
+        self.apps_title_label = QTextEdit("Select an App")
         self.apps_title_label.setStyleSheet(TITLE_STYLE)
+        self.apps_title_label.setFixedSize(MAX_INFO_PANEL_WIDTH - 40 * 4, 50)
+        app_title_add_btn = QPushButton("➕")
+        app_title_add_btn.setFixedSize(28, 28)
+        app_title_add_btn.setStyleSheet(LINK_ADD_BTN_STYLE)
+        app_title_add_btn.clicked.connect(self.create_new_app)
         app_title_arrows_layout = QVBoxLayout()
         app_title_arrows_layout.setSpacing(5)
         app_title_up_btn = QPushButton("🔼")
@@ -197,6 +202,7 @@ class MainWindow(QMainWindow):
         app_title_arrows_layout.addWidget(app_title_down_btn)
         app_title_layout.addLayout(app_title_arrows_layout)
         app_title_layout.addWidget(self.apps_title_label)
+        app_title_layout.addWidget(app_title_add_btn)
         
         # --- APP PATH ---
         self.app_path_input = QLineEdit()
@@ -351,7 +357,6 @@ class MainWindow(QMainWindow):
         # --- FINAL LAYOUT --- 
         self.panel_stack.addWidget(self.empty_widget)
         self.panel_stack.addWidget(self.editor_widget)
-        self.panel_stack.setCurrentIndex(0)  
         panel_layout.addLayout(app_title_layout)
         panel_layout.addWidget(self.panel_stack, stretch=1)
         panel_layout.addWidget(border_lbl)
@@ -359,6 +364,10 @@ class MainWindow(QMainWindow):
         panel_layout.addLayout(add_link_layout)
         panel_layout.addWidget(self.link_scroll_area, stretch=1)
         main_layout.addWidget(self.info_panel, stretch=1)
+        
+        # --- FINAL SETUP ---
+        self.apps_title_label.setDisabled(True)
+        self.panel_stack.setCurrentIndex(0)  
         self.toggle_info_panel()
         
     def toggle_info_panel(self):
@@ -390,6 +399,7 @@ class MainWindow(QMainWindow):
         
     def update_info_panel(self, app): 
         if not(self.activated_app) or self.activated_app.get_name() != app.get_name():
+            self.apps_title_label.setDisabled(False)
             self.panel_stack.setCurrentIndex(1)
             self.activated_app = app
             self.canvas.reset_app_view(app)
@@ -516,7 +526,12 @@ class MainWindow(QMainWindow):
             )
             if file_path:
                 normalized_path = os.path.normpath(file_path)
-                self.app_path_input.setText(normalized_path)
+                error, name = self.get_name_from_path(normalized_path)
+                if(error == -1):
+                    QMessageBox.warning(self, "Missing Info", "Please provide the correct path")
+                else:
+                    self.apps_title_label.setText(name)
+                    self.app_path_input.setText(normalized_path)
     
     def browse_for_folder(self) :
         if self.activated_app:
@@ -535,7 +550,7 @@ class MainWindow(QMainWindow):
     
     def saving_app(self):
         if self.activated_app:
-            name = self.activated_app.get_name()
+            name = self.apps_title_label.toPlainText().lower()
             path = self.app_path_input.text().strip()
             dir = self.dir_path_input.text().strip()
             screen = self.screen_spin.value() - 1
@@ -564,8 +579,27 @@ class MainWindow(QMainWindow):
             self.canvas.delete_app_view(self.activated_app)
             self.activated_app = None
             self.apps_title_label.setText("Select an App")
+            self.apps_title_label.setDisabled(True)
             self.panel_stack.setCurrentIndex(0)
             self.writing_file()
+    
+    def create_new_app(self):
+        if(len(self.apps) < 32):
+            name = self.get_new_name()
+            path = "c:\\"
+            dir = None
+            monitor = self.screens[0]
+            pos = [monitor.x, monitor.y] 
+            size = [monitor.width, monitor.height]
+            new_app = App(name, path=path, dir=dir, pos=pos, size=size)
+            self.apps.append(new_app)
+            self.canvas.add_app_view(new_app)
+            self.update_info_panel(new_app)
+            self.apps_title_label.setDisabled(False)
+            self.panel_stack.setCurrentIndex(1)
+            self.writing_file()
+        else:
+            QMessageBox.warning(self, "Overflow", "Too much apps getting opened\nWhen the pc is starting up")
     
     def writing_file(self):
         if False:
@@ -585,6 +619,17 @@ class MainWindow(QMainWindow):
             if (pos[0] >= x and pos[0] < x + width) and (pos[1] >= y and pos[1] < y + height):
                 return i
         return -1
+    
+    def get_name_from_path(self, path):
+        path_list = path.split("\\")
+        if(len(path_list) <= 1):
+            return -1, self.activated_app.get_name()
+        if path_list[-1]:
+            file_name_list = (path_list[-1]).split(".")
+            if(len(file_name_list) <= 1):
+                return -1, self.activated_app.get_name()
+            return 0, file_name_list[0].lower()
+        return 0, "explorer"
     
     def get_max_border(self):
         min_x = self.screens[0].x
@@ -630,6 +675,27 @@ class MainWindow(QMainWindow):
             self.link_list_layout.addWidget(existing_block)
             self.link_name_input.clear()
             self.link_link_input.clear()
+    
+    def get_new_name(self):
+        n = 0
+        while(n < len(self.apps)):
+            exist = False
+            for app in self.apps:
+                if(n == 0):
+                    if(app.get_name() == "new app"):
+                        exist = True
+                        break
+                else:
+                    if(app.get_name() == f"new app({n})"):
+                        exist = True
+                        break          
+            if not exist:
+                break
+            n += 1
+        if n == 0:
+            return "new app"
+        return f"new app({n})"
+    
     
     def create_header(self, text):
         lbl = QLabel(text)

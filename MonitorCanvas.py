@@ -11,7 +11,7 @@ class MonitorCanvas(QGraphicsView):
         super().__init__()
         self.screens = screens
         self.apps = apps
-        self.app_type = type(InteractiveAppItem(0, 0, 0, 0, App(""), 0))
+        self.update_panel_callback = update_panel_callback
         
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
@@ -26,28 +26,29 @@ class MonitorCanvas(QGraphicsView):
             monitor_view.setBrush(QBrush(QColor("#333333")))
             monitor_view.setPen(QPen(QColor("#555555"), 5))
             self.scene.addItem(monitor_view)
-            
+        
+        num_apps = len(self.apps)
         for z, app in enumerate(self.apps): 
             size = app.get_size()
             pos = app.get_pos()
             if(size):
-                app_view = InteractiveAppItem((pos[0] - self.x_cor) // self.down_by, (pos[1] - self.y_cor) // self.down_by, size[0] // self.down_by, size[1] // self.down_by, app, z, update_panel_callback)
+                app_view = InteractiveAppItem((pos[0] - self.x_cor) // self.down_by, (pos[1] - self.y_cor) // self.down_by, size[0] // self.down_by, size[1] // self.down_by, app, num_apps - z, self.update_panel_callback)
             else: 
                 screen_index = self.find_screen(pos)
                 monitor = self.screens[screen_index]
-                app_view = InteractiveAppItem((monitor.x - self.x_cor)//self.down_by, (monitor.y - self.y_cor)//self.down_by, (monitor.width)//self.down_by, (monitor.height)//self.down_by, app, z, update_panel_callback)
-                
+                app_view = InteractiveAppItem((monitor.x - self.x_cor)//self.down_by, (monitor.y - self.y_cor)//self.down_by, (monitor.width)//self.down_by, (monitor.height)//self.down_by, app, num_apps - z, self.update_panel_callback)
             self.scene.addItem(app_view)
-        
+
         
         
     def reset_app_view(self, app_selected):  
+        max_items = len(self.scene.items())
         for z, view in enumerate(self.scene.items()):
-            if(type(view) == self.app_type):
+            if(str(type(view)) == "<class \'InteractiveAppItem.InteractiveAppItem\'>"):
                 app = view.get_app()
                 size = app.get_size()
                 pos = app.get_pos()
-                view.setZValue(z)
+                view.setZValue(max_items - z)
                 if(size):
                     view.setRect((pos[0] - self.x_cor) // self.down_by, (pos[1] - self.y_cor) // self.down_by, size[0] // self.down_by, size[1] // self.down_by)
                 else: 
@@ -59,12 +60,18 @@ class MonitorCanvas(QGraphicsView):
     def delete_app_view(self, app_deleted):
         delete_view = None
         for view in self.scene.items():
-            if(type(view) == self.app_type):
+            if(str(type(view)) == "<class \'InteractiveAppItem.InteractiveAppItem\'>"):
                 if(view.find_app_item(app_deleted)):
                     delete_view = view
         if delete_view:
             self.scene.removeItem(delete_view)
 
+    def add_app_view(self, app_added):
+        size = app_added.get_size()
+        pos = app_added.get_pos()
+        if(size):
+            app_view = InteractiveAppItem((pos[0] - self.x_cor) // self.down_by, (pos[1] - self.y_cor) // self.down_by, size[0] // self.down_by, size[1] // self.down_by, app_added, 0, self.update_panel_callback)       
+        self.scene.addItem(app_view)
     
     def get_correction(self):
         x_cor, y_cor = 0, 0
@@ -88,7 +95,7 @@ class MonitorCanvas(QGraphicsView):
         set_height = height // self.down_by
         
         for z, view in enumerate(self.scene.items()):
-            if(type(view) == self.app_type):
+            if(str(type(view)) == "<class \'InteractiveAppItem.InteractiveAppItem\'>"):
                 if(view.find_app_item(app)):
                     view.setRect(set_x, set_y, set_width, set_height)
                     view.setZValue(len(self.scene.items()))

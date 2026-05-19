@@ -39,11 +39,17 @@ class InteractiveAppItem(QGraphicsRectItem):
         super().mousePressEvent(event)
         click_pos = event.scenePos()
         app_under_cursor = self.scene().items(click_pos)
-        front_app = app_under_cursor[0].get_app()
-        if event.button() == Qt.MouseButton.LeftButton:
-            if(front_app.get_name() == self.app.get_name()):
-                if self.click_callback:
-                    self.click_callback(self.app)
+        smallest_index = 0
+        while(smallest_index < len(app_under_cursor)):
+            if(str(type(app_under_cursor[smallest_index])) == "<class \'InteractiveAppItem.InteractiveAppItem\'>"):
+                break
+            smallest_index += 1
+        if(smallest_index < len(app_under_cursor)):
+            front_app = app_under_cursor[smallest_index].get_app()
+            if event.button() == Qt.MouseButton.LeftButton:
+                if(front_app.get_name() == self.app.get_name()):
+                    if self.click_callback:
+                        self.click_callback(self.app)
             
     def find_app_item(self, app):
         return self.app == app
