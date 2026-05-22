@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)
         
         # --- CANVAS ---
-        self.canvas = MonitorCanvas(self.screens, self.apps, self.update_info_panel)
+        self.canvas = MonitorCanvas(self.screens, self.apps, self.update_info_panel, self.live_update_panel_from_drag)
         main_layout.addWidget(self.canvas, stretch=3)
         self.info_panel = QFrame()
         self.info_panel.setStyleSheet(INFO_PANEL_STYLE)
@@ -443,6 +443,23 @@ class MainWindow(QMainWindow):
             screen = self.screen_spin.value()
             self.canvas.change_app_view(self.activated_app, x, y, width, height, screen)
     
+    def live_update_panel_from_drag(self, app, real_x, real_y):
+        if self.activated_app == app:
+            screen_index = self.find_screen([real_x, real_y])
+            x = int(real_x - self.screens[screen_index].x)
+            y = int(real_y - self.screens[screen_index].y)
+            
+            self.x_spin.blockSignals(True)
+            self.y_spin.blockSignals(True)
+            self.screen_spin.blockSignals(True)
+            self.screen_spin.setValue(screen_index + 1)
+            self.x_spin.setValue(x)
+            self.y_spin.setValue(y)
+            self.x_spin.blockSignals(False)
+            self.y_spin.blockSignals(False)
+            self.screen_spin.blockSignals(False)
+            
+    
     def change_app_up(self):
         if not self.activated_app:
             if(len(self.apps) > 0):
@@ -600,10 +617,6 @@ class MainWindow(QMainWindow):
             self.writing_file()
         else:
             QMessageBox.warning(self, "Overflow", "Too much apps getting opened\nWhen the pc is starting up")
-    
-    def writing_file(self):
-        if False:
-            self.saving_file.write_file(self.apps, self.links)
                 
     def get_links_list(self):
         return f"{str(self.links)}"
@@ -706,3 +719,7 @@ class MainWindow(QMainWindow):
         monitor = self.screens[screen]
         pos = [x + monitor.x, y + monitor.y]
         return pos
+    
+    def writing_file(self):
+        if False:
+            self.saving_file.write_file(self.apps, self.links)
