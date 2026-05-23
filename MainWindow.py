@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)
         
         # --- CANVAS ---
-        self.canvas = MonitorCanvas(self.screens, self.apps, self.update_info_panel, self.live_update_panel_from_drag, self.live_update_panel_from_resize)
+        self.canvas = MonitorCanvas(self.screens, self.apps, self.update_info_panel, self.live_update_panel_from_drag, self.live_update_panel_from_resize, self.handle_deleting_app)
         main_layout.addWidget(self.canvas, stretch=3)
         self.info_panel = QFrame()
         self.info_panel.setStyleSheet(INFO_PANEL_STYLE)
@@ -539,6 +539,14 @@ class MainWindow(QMainWindow):
                     self.dir_path_input.setText(self.activated_app.get_dir_path())
                 else:
                     self.dir_path_input.setText("C:\\")
+                
+    def handle_deleting_app(self, deleted_app):
+        if not self.activated_app == deleted_app:
+            info_panel_state = self.panel_stack.currentIndex()
+            self.update_info_panel(deleted_app)
+            if(info_panel_state == 0):
+                self.toggle_info_panel()
+        self.deleting_app()
                       
     def browse_for_executable(self) :
         if self.activated_app:
@@ -731,5 +739,4 @@ class MainWindow(QMainWindow):
         return pos
     
     def writing_file(self):
-        if False:
-            self.saving_file.write_file(self.apps, self.links)
+        self.saving_file.write_file(self.apps, self.links)

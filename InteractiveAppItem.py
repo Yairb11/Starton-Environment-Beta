@@ -1,17 +1,18 @@
 from PyQt6.QtWidgets import (QApplication, QGraphicsView, QGraphicsScene, 
                              QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
-                             QGraphicsRectItem, QLabel, QFrame, QGraphicsItem)
-from PyQt6.QtGui import QBrush, QColor, QPen, QPainter, QCursor
+                             QGraphicsRectItem, QLabel, QFrame, QGraphicsItem, QMenu)
+from PyQt6.QtGui import QBrush, QColor, QPen, QPainter, QCursor, QAction
 from PyQt6.QtCore import Qt, QPointF, QRectF
 from App import *
 
 class InteractiveAppItem(QGraphicsRectItem):
-    def __init__(self, x, y, width, height, app, z, bounds, click_callback=None, pos_callback=None, size_callback=None):
+    def __init__(self, x, y, width, height, app, z, bounds, click_callback=None, pos_callback=None, size_callback=None, delete_callback=None):
         super().__init__(x, y, width, height)
         self.app = app
         self.click_callback = click_callback
         self.pos_callback = pos_callback
         self.size_callback = size_callback
+        self.delete_callback = delete_callback
         self.bounds = bounds
         self._is_resizing = False
         self._resize_margin = 12
@@ -86,9 +87,7 @@ class InteractiveAppItem(QGraphicsRectItem):
                     super().mousePressEvent(event)
                 if self.click_callback:
                     self.click_callback(self.app)
-                    
-            
-        
+                       
     def mouseMoveEvent(self, event):
         if self._is_resizing:
             rect = self.rect()
@@ -99,6 +98,39 @@ class InteractiveAppItem(QGraphicsRectItem):
                 self.size_callback(self.app, new_width, new_height)
         else:
             super().mouseMoveEvent(event)
+            
+    def contextMenuEvent(self, event):
+        """Fires automatically when the user right-clicks the item."""
+        
+        # Create the popup menu
+        context_menu = QMenu()
+        context_menu.setStyleSheet("""
+            QMenu {
+                background-color: #2b2b2b;
+                color: #cccccc;
+                border: 1px solid #444;
+                border-radius: 4px;
+            }
+            QMenu::item { padding: 6px 24px; }
+            QMenu::item:selected { background-color: #c50f1f; color: white; }
+        """)
+
+        # Create the action
+        delete_action = QAction("🗑️ Delete App", context_menu)
+        delete_action.triggered.connect(self.execute_delete)
+        context_menu.addAction(delete_action)
+        
+        # Pop it up exactly where the mouse clicked on the screen
+        context_menu.exec(event.screenPos())
+        
+        # Accept the event so the right-click doesn't accidentally trigger a drag/move
+        event.accept()
+
+    def execute_delete(self):
+        """Handles the actual removal of the item."""
+        # 1. Fire the callback to tell the Main Window this app is dying
+        if self.delete_callback:
+            self.delete_callback(self.app)
             
     def itemChange(self, change, value):
             if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange and self.bounds:

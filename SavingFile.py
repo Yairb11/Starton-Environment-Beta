@@ -43,36 +43,37 @@ class SavingFile:
     
     def get_apps(self, raw_info):
         apps = []  
-        apps_info = raw_info.split("\n")
-        for app_raw_info in apps_info:
-            app_info = app_raw_info.split(" ")
-            app = App(app_info[0])
-            app.set_app_path(app_info[1])
-            if(app_info[2] == "None"):
-                app.set_dir_path(None)
-            else:
-                app.set_dir_path(app_info[2])
-            pos_raw_info = app_info[3]
-            pos_info = (pos_raw_info[1:-1]).split(",")
-            pos = [int(pos_info[i]) for i in range(len(pos_info))]
-            app.set_pos(pos)
-            size_raw_info = app_info[4]
-            if(size_raw_info != "None"):
-                size_info = (size_raw_info[1:-1]).split(",")
-                app.set_size([int(size_info[i]) for i in range(len(size_info))])
-            else:
-                app.set_size(None)
-            apps.append(app)
-    
+        if(raw_info != ""):
+            apps_info = raw_info.split("\n")
+            for app_raw_info in apps_info:
+                app_info = app_raw_info.split(" ")
+                app = App(app_info[0])
+                app.set_app_path(app_info[1])
+                if(app_info[2] == "None"):
+                    app.set_dir_path(None)
+                else:
+                    app.set_dir_path(app_info[2])
+                pos_raw_info = app_info[3]
+                pos_info = (pos_raw_info[1:-1]).split(",")
+                pos = [int(pos_info[i]) for i in range(len(pos_info))]
+                app.set_pos(pos)
+                size_raw_info = app_info[4]
+                if(size_raw_info != "None"):
+                    size_info = (size_raw_info[1:-1]).split(",")
+                    app.set_size([int(size_info[i]) for i in range(len(size_info))])
+                else:
+                    app.set_size(None)
+                apps.append(app)
         return apps
     
     def get_links(self, raw_info):
         links = []
-        links_info = raw_info.split("\n")
-        for link_raw_info in links_info:
-            link_info = link_raw_info.split(" ")
-            link = Link(link_info[0], link_info[1])
-            links.append(link)
+        if(raw_info != ""):
+            links_info = raw_info.split("\n")
+            for link_raw_info in links_info:
+                link_info = link_raw_info.split(" ")
+                link = Link(link_info[0], link_info[1])
+                links.append(link)
         return links
     
     def set_apps(self, apps):
