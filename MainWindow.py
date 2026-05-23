@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)
         
         # --- CANVAS ---
-        self.canvas = MonitorCanvas(self.screens, self.apps, self.update_info_panel, self.live_update_panel_from_drag)
+        self.canvas = MonitorCanvas(self.screens, self.apps, self.update_info_panel, self.live_update_panel_from_drag, self.live_update_panel_from_resize)
         main_layout.addWidget(self.canvas, stretch=3)
         self.info_panel = QFrame()
         self.info_panel.setStyleSheet(INFO_PANEL_STYLE)
@@ -458,6 +458,16 @@ class MainWindow(QMainWindow):
             self.x_spin.blockSignals(False)
             self.y_spin.blockSignals(False)
             self.screen_spin.blockSignals(False)
+            
+    def live_update_panel_from_resize(self, app, new_width, new_height):
+        if self.activated_app == app:
+            self.width_spin.blockSignals(True)
+            self.height_spin.blockSignals(True)
+            self.full_screen.setChecked(False)
+            self.width_spin.setValue(new_width)
+            self.height_spin.setValue(new_height)
+            self.width_spin.blockSignals(False)
+            self.height_spin.blockSignals(False)
             
     
     def change_app_up(self):

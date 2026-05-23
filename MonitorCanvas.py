@@ -7,12 +7,13 @@ from App import *
 from InteractiveAppItem import *
 
 class MonitorCanvas(QGraphicsView):
-    def __init__(self, screens, apps, update_panel_callback, drag_callback):
+    def __init__(self, screens, apps, update_panel_callback, drag_callback, resize_callback):
         super().__init__()
         self.screens = screens
         self.apps = apps
         self.update_panel_callback = update_panel_callback
         self.drag_callback = drag_callback
+        self.resize_callback = resize_callback
         
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
@@ -33,11 +34,11 @@ class MonitorCanvas(QGraphicsView):
             size = app.get_size()
             pos = app.get_pos()
             if(size):
-                app_view = InteractiveAppItem((pos[0] - self.x_min) // self.down_by, (pos[1] - self.y_min) // self.down_by, size[0] // self.down_by, size[1] // self.down_by, app, num_apps - z, self.total_screen_area, click_callback=self.update_panel_callback , pos_callback=self.pos_callback)
+                app_view = InteractiveAppItem((pos[0] - self.x_min) // self.down_by, (pos[1] - self.y_min) // self.down_by, size[0] // self.down_by, size[1] // self.down_by, app, num_apps - z, self.total_screen_area, click_callback=self.update_panel_callback , pos_callback=self.pos_callback, size_callback=self.size_callback)
             else: 
                 screen_index = self.find_screen(pos)
                 monitor = self.screens[screen_index]
-                app_view = InteractiveAppItem((monitor.x - self.x_min)//self.down_by, (monitor.y - self.y_min)//self.down_by, (monitor.width)//self.down_by, (monitor.height)//self.down_by, app, num_apps - z, self.total_screen_area, click_callback=self.update_panel_callback, pos_callback=self.pos_callback)
+                app_view = InteractiveAppItem((monitor.x - self.x_min)//self.down_by, (monitor.y - self.y_min)//self.down_by, (monitor.width)//self.down_by, (monitor.height)//self.down_by, app, num_apps - z, self.total_screen_area, click_callback=self.update_panel_callback, pos_callback=self.pos_callback, size_callback=self.size_callback)
             self.scene.addItem(app_view)
         
     def reset_app_view(self, app_selected):  
@@ -72,7 +73,7 @@ class MonitorCanvas(QGraphicsView):
         size = app_added.get_size()
         pos = app_added.get_pos()
         if(size):
-            app_view = InteractiveAppItem((pos[0] - self.x_min) // self.down_by, (pos[1] - self.y_min) // self.down_by, size[0] // self.down_by, size[1] // self.down_by, app_added, 0, self.total_screen_area, click_callback=self.update_panel_callback, pos_callback=self.pos_callback)       
+            app_view = InteractiveAppItem((pos[0] - self.x_min) // self.down_by, (pos[1] - self.y_min) // self.down_by, size[0] // self.down_by, size[1] // self.down_by, app_added, 0, self.total_screen_area, click_callback=self.update_panel_callback, pos_callback=self.pos_callback, size_callback=self.size_callback)       
         self.scene.addItem(app_view)
     
     def get_bounds(self):
@@ -110,5 +111,9 @@ class MonitorCanvas(QGraphicsView):
     def pos_callback(self, app, real_x, real_y):
         if self.drag_callback:
             self.drag_callback(app, (real_x * self.down_by) + self.x_min , (real_y * self.down_by) + self.y_min)
+    
+    def size_callback(self, app, new_width, new_height):
+        if self.resize_callback:
+            self.resize_callback(app, int(new_width * self.down_by), int(new_height * self.down_by))
 
             
