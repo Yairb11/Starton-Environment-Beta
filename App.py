@@ -1,6 +1,7 @@
 import re
+from Size import *
 class App:
-    def __init__(self, name, path = "", dir = "", pos = [0, 0], size = [0, 0]):
+    def __init__(self, name, path = "", dir = "", pos = [0, 0], size = Size([0,0])):
         self.name = name
         self.app_path = path
         self.dir_path = dir
@@ -36,11 +37,7 @@ class App:
     
     def __str__(self):
         pos_str = f"[{self.pos[0]},{self.pos[1]}]"
-        if(self.size):
-            size_str = f"[{self.size[0]},{self.size[1]}]"
-        else:
-            size_str = "None"
-        return f"{self.name} {self.app_path} {self.dir_path} {pos_str} {size_str}"
+        return f"{self.name} {self.app_path} {self.dir_path} {pos_str} {str(self.size)}"
     
     def change_app(self, name, app_path, dir_path, pos, size):
         self.name = name
@@ -49,12 +46,13 @@ class App:
         self.pos = []
         self.pos.append(pos[0])
         self.pos.append(pos[1])
-        self.size = []
-        self.size.append(size[0])
-        self.size.append(size[1])
+        self.size = size
     
     def __eq__(self, other):
         if not isinstance(other, App):
             return NotImplemented
         return str(self) == str(other)
+    
+    def is_folder(self):
+        return self.app_path[-1] == "\\"
         

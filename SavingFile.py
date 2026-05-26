@@ -1,6 +1,7 @@
 import re
 from App import *
 from Link import *
+from Size import *
 
 XML_TAGS = ["open_apps", "open_urls"]
 
@@ -17,14 +18,15 @@ class SavingFile:
     def write_file(self, apps, links):
         apps_str = self.set_apps(apps)
         links_str = self.set_links(links)
-        file_list =[
-            f"<{XML_TAGS[0]}>" ,
-            f"{apps_str}",
-            f"</{XML_TAGS[0]}>",
-            f"<{XML_TAGS[1]}>",
-            f"{links_str}",
-            f"</{XML_TAGS[1]}>"
-        ]
+        file_list = []
+        file_list.append(f"<{XML_TAGS[0]}>")
+        if apps_str:
+            file_list.append(f"{apps_str}")
+        file_list.append(f"</{XML_TAGS[0]}>")
+        file_list.append(f"<{XML_TAGS[1]}>")
+        if links_str:
+            file_list.append(f"{links_str}")
+        file_list.append(f"</{XML_TAGS[1]}>")
         self.set_file_text("\n".join(file_list))
     
     def get_from_file(self):
@@ -58,13 +60,10 @@ class SavingFile:
                 pos = [int(pos_info[i]) for i in range(len(pos_info))]
                 app.set_pos(pos)
                 size_raw_info = app_info[4]
-                if(size_raw_info != "None"):
-                    size_info = (size_raw_info[1:-1]).split(",")
-                    app.set_size([int(size_info[i]) for i in range(len(size_info))])
-                else:
-                    app.set_size(None)
+                app.set_size(Size(size_raw_info))   
                 apps.append(app)
-        return apps
+            return apps
+        return None
     
     def get_links(self, raw_info):
         links = []
@@ -74,19 +73,25 @@ class SavingFile:
                 link_info = link_raw_info.split(" ")
                 link = Link(link_info[0], link_info[1])
                 links.append(link)
-        return links
+            return links
+        return None
     
-    def set_apps(self, apps):
-        apps_list = []
-        for app in apps:
-            apps_list.append(str(app))
-        return "\n".join(apps_list)
+    def set_apps(self, apps): 
+        if apps:
+            apps_list = []
+            for app in apps:
+                apps_list.append(str(app))
+            return "\n".join(apps_list)
+        return None
+        
     
     def set_links(self, links):
-        links_list = []
-        for link in links:
-            links_list.append(str(link))
-        return "\n".join(links_list)
+        if links:
+            links_list = []
+            for link in links:
+                links_list.append(str(link))
+            return "\n".join(links_list)
+        return None
     
     def get_file_text(self):
         file = open(self.file_path, "r")

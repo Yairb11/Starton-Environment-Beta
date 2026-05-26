@@ -7,7 +7,7 @@ from Link import *
 from SavingFile import *
 
 
-FILE_PATH = r"X:\code\python\on_start\on_start_info - Copy.txt"
+FILE_PATH = r"C:\Users\yairb\on_start_gui\on_start_info - Copy.txt"
 
 def find_resolution():
     screens = []

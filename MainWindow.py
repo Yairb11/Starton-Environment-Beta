@@ -9,6 +9,7 @@ from MonitorCanvas import *
 from Link import *
 from LinkBlock import *
 from SavingFile import *
+from Size import *
 import os
 
 INFO_PANEL_STYLE = "background-color: #252526;" 
@@ -118,6 +119,9 @@ SAVE_BTN_STYLE = """
 """
 
 MAX_INFO_PANEL_WIDTH = 500
+SIZE_TITLE_OPTIONS = ["CUSTOM", "FULL SCREEN", "LEFT SIDE", "RIGHT SIDE", "TOP SIDE", "BOTTOM SIDE", "LEFT TOP CORNER", "LEFT BOTTOM CORNER", "RIGHT TOP CORNER", "RIGHT BOTTOM CORNER"]
+SIZE_STACK_OPTIONS = {"Full": 1, "Left": 2, "Right": 3, "Top": 4, "Bottom": 5, "Left_Top": 6, "Left_Bottom": 7, "Right_Top": 8, "Right_Bottom": 9}
+SIZE_NANE_OPTIONS = ["Full", "Left", "Right", "Top", "Bottom", "Left_Top", "Left_Bottom", "Right_Top", "Right_Bottom"]
 
 class MainWindow(QMainWindow):
     def __init__(self, screens, apps, links, saving_file):
@@ -269,8 +273,11 @@ class MainWindow(QMainWindow):
         
         # --- SIZE ---
         max_width, max_height = self.get_max_border()
-        size_layout = QGridLayout()
-        size_layout.setSpacing(10)
+        self.size_stack = QStackedWidget()
+        
+        size_costum_widget = QWidget()
+        size_costum_layout = QGridLayout(size_costum_widget)
+        size_costum_layout.setContentsMargins(15, 20, 15, 20)
         self.width_spin = QSpinBox()
         self.width_spin.setRange(0, max_width) 
         self.width_spin.setStyleSheet(SPINBOX_STYLE)
@@ -283,15 +290,49 @@ class MainWindow(QMainWindow):
         width_lbl.setStyleSheet(LBL_STYLE)
         height_lbl = QLabel("Height:")
         height_lbl.setStyleSheet(LBL_STYLE)
-        size_lbl = self.create_header("WINDOW STATE")
-        self.full_screen = QCheckBox("Full Screen")
-        self.full_screen.setStyleSheet(CHECK_STYLE)
-        self.full_screen.toggled.connect(self.handle_full_screen)
-        size_layout.addWidget(width_lbl, 0, 0)
-        size_layout.addWidget(self.width_spin, 0, 1)
-        size_layout.addWidget(self.full_screen, 0, 5)
-        size_layout.addWidget(height_lbl, 1, 0)
-        size_layout.addWidget(self.height_spin, 1, 1)
+        size_costum_layout.addWidget(width_lbl, 0, 0)
+        size_costum_layout.addWidget(self.width_spin, 0, 1)
+        size_costum_layout.addWidget(height_lbl, 1, 0)
+        size_costum_layout.addWidget(self.height_spin, 1, 1)
+        
+        size_full_widget = QWidget()
+        size_left_widget = QWidget()
+        size_right_widget = QWidget()
+        size_top_widget = QWidget()
+        size_bottom_widget = QWidget()
+        size_left_top_widget = QWidget()
+        size_left_bottom_widget = QWidget()
+        size_right_top_widget = QWidget()
+        size_right_bottom_widget = QWidget()
+        
+        self.size_lbl = self.create_header("WINDOW STATE")
+        size_title = QHBoxLayout()
+        size_title_arrows_layout = QVBoxLayout()
+        size_title_arrows_layout.setSpacing(5)
+        size_title_up_btn = QPushButton("🔼")
+        size_title_up_btn.setFixedSize(28, 28)
+        size_title_up_btn.setStyleSheet(TITLE_BTN_STYLE)
+        size_title_up_btn.clicked.connect(lambda: self.change_size_position(1)) 
+        size_title_down_btn = QPushButton("🔽")
+        size_title_down_btn.setFixedSize(28, 28)
+        size_title_down_btn.setStyleSheet(TITLE_BTN_STYLE)
+        size_title_down_btn.clicked.connect(lambda: self.change_size_position(-1)) 
+        size_title_arrows_layout.addWidget(size_title_up_btn)
+        size_title_arrows_layout.addWidget(size_title_down_btn)
+        size_title.addWidget(self.size_lbl)
+        size_title.addLayout(size_title_arrows_layout)
+        
+        self.size_stack.addWidget(size_costum_widget)
+        self.size_stack.addWidget(size_full_widget)
+        self.size_stack.addWidget(size_left_widget)
+        self.size_stack.addWidget(size_right_widget)
+        self.size_stack.addWidget(size_top_widget)
+        self.size_stack.addWidget(size_bottom_widget)
+        self.size_stack.addWidget(size_left_top_widget)
+        self.size_stack.addWidget(size_left_bottom_widget)
+        self.size_stack.addWidget(size_right_top_widget)
+        self.size_stack.addWidget(size_right_bottom_widget)
+        self.size_stack.setCurrentIndex(0)  
         
         # --- SAVING ---
         saving_layout = QHBoxLayout()
@@ -349,8 +390,8 @@ class MainWindow(QMainWindow):
         editor_layout.addLayout(dir_path_layout)
         editor_layout.addWidget(position_lbl)
         editor_layout.addLayout(pos_layout)
-        editor_layout.addWidget(size_lbl)
-        editor_layout.addLayout(size_layout) 
+        editor_layout.addLayout(size_title)
+        editor_layout.addWidget(self.size_stack) 
         editor_layout.addLayout(saving_layout)
         editor_layout.addStretch()
         
@@ -398,7 +439,7 @@ class MainWindow(QMainWindow):
         self.info_panel_toggle_btn.raise_()
         
     def update_info_panel(self, app): 
-        if not(self.activated_app) or self.activated_app.get_name() != app.get_name():
+        if not(self.activated_app) or self.activated_app != app:
             self.apps_title_label.setDisabled(False)
             self.panel_stack.setCurrentIndex(1)
             self.activated_app = app
@@ -413,15 +454,24 @@ class MainWindow(QMainWindow):
             self.x_spin.setValue(pos[0])
             self.y_spin.setValue(pos[1])
             
-            size = app.get_size()
-            if size:
-                self.full_screen.setChecked(False)
+            size_obj = app.get_size()
+            size = size_obj.get_size()
+            size_stack_pos = 0
+            if(size_obj.get_is_list()):
                 self.width_spin.setValue(size[0])
                 self.height_spin.setValue(size[1])
+                self.can_be_edited(True)
             else:
-                self.full_screen.setChecked(True)
-                self.width_spin.setValue(screen.width)
-                self.height_spin.setValue(screen.height)
+                self.can_be_edited(False)
+                app_x, app_y, app_width, app_height = self.get_position_on_monitor(size, screen)
+                size_stack_pos = SIZE_STACK_OPTIONS[size]
+                self.x_spin.setValue(app_x)
+                self.y_spin.setValue(app_y)
+                self.width_spin.setValue(app_width)
+                self.height_spin.setValue(app_height)
+            
+            self.size_stack.setCurrentIndex(size_stack_pos)
+            self.size_lbl.setText(f"WINDOW STATE - {SIZE_TITLE_OPTIONS[size_stack_pos]}")
             
             self.apps_title_label.setText(f"{app.get_name()}") 
             self.app_path_input.setText(f"{app.get_app_path()}")
@@ -433,7 +483,38 @@ class MainWindow(QMainWindow):
                 self.disable_dir_path.setChecked(True)
             if(not self.is_panel_open):
                 self.toggle_info_panel()
-                
+    
+    def change_size_position(self, diff):
+        size_state = self.size_stack.currentIndex()
+        max_state = len(SIZE_TITLE_OPTIONS)
+        new_size_state = (size_state + diff) % max_state
+        self.size_stack.setCurrentIndex(new_size_state)
+        self.size_lbl.setText(f"WINDOW STATE - {SIZE_TITLE_OPTIONS[new_size_state]}")
+        
+        if(new_size_state == 0):
+            self.can_be_edited(True)
+            return 
+        self.can_be_edited(False)
+        monitor = self.screens[self.screen_spin.value() - 1]
+        new_x = 0
+        new_y = 0
+        new_width = monitor.width
+        new_height = monitor.height
+        if new_size_state == 3 or new_size_state == 8 or new_size_state == 9:
+            new_x = monitor.width // 2
+        if new_size_state == 5 or new_size_state == 7 or new_size_state == 9:
+            new_y = monitor.height // 2
+        if not(new_size_state == 4 or new_size_state == 5 or new_size_state == 1):
+            new_width = monitor.width // 2  
+        if not(new_size_state == 2 or new_size_state == 3 or new_size_state == 1):
+            new_height = monitor.height // 2  
+        self.x_spin.setValue(new_x)
+        self.y_spin.setValue(new_y)
+        self.width_spin.setValue(new_width)
+        self.height_spin.setValue(new_height)
+        
+        
+            
     def live_update_canvas(self):
         if self.activated_app: 
             x = self.x_spin.value()
@@ -443,11 +524,16 @@ class MainWindow(QMainWindow):
             screen = self.screen_spin.value()
             self.canvas.change_app_view(self.activated_app, x, y, width, height, screen)
     
-    def live_update_panel_from_drag(self, app, real_x, real_y):
+    def live_update_panel_from_drag(self, app, real_x, real_y, is_moved):
         if self.activated_app == app:
             screen_index = self.find_screen([real_x, real_y])
             x = int(real_x - self.screens[screen_index].x)
             y = int(real_y - self.screens[screen_index].y)
+            
+            if(is_moved):
+                self.can_be_edited(True)
+                self.size_stack.setCurrentIndex(0)
+                self.size_lbl.setText(f"WINDOW STATE - {SIZE_TITLE_OPTIONS[0]}")
             
             self.x_spin.blockSignals(True)
             self.y_spin.blockSignals(True)
@@ -461,19 +547,21 @@ class MainWindow(QMainWindow):
             
     def live_update_panel_from_resize(self, app, new_width, new_height):
         if self.activated_app == app:
+            self.can_be_edited(True)
+            self.size_stack.setCurrentIndex(0)
+            self.size_lbl.setText(f"WINDOW STATE - {SIZE_TITLE_OPTIONS[0]}")
             self.width_spin.blockSignals(True)
             self.height_spin.blockSignals(True)
-            self.full_screen.setChecked(False)
             self.width_spin.setValue(new_width)
             self.height_spin.setValue(new_height)
             self.width_spin.blockSignals(False)
             self.height_spin.blockSignals(False)
             
-    
     def change_app_up(self):
         if not self.activated_app:
-            if(len(self.apps) > 0):
-                self.update_info_panel(self.apps[0])
+            if self.apps:
+                if(len(self.apps) > 0):
+                    self.update_info_panel(self.apps[0])
         else:
             index = 0
             app_count = len(self.apps)
@@ -486,8 +574,9 @@ class MainWindow(QMainWindow):
     
     def change_app_down(self):
         if not self.activated_app:
-            if(len(self.apps) > 0):
-                self.update_info_panel(self.apps[-1])
+            if self.apps:
+                if(len(self.apps) > 0):
+                    self.update_info_panel(self.apps[-1])
         else:
             index = 0
             app_count = len(self.apps)
@@ -497,36 +586,6 @@ class MainWindow(QMainWindow):
                 index += 1
             if(index < app_count):
                 self.update_info_panel(self.apps[(index - 1) % app_count])
-        
-    
-    def handle_full_screen(self, checked):
-        if self.activated_app:
-            self.width_spin.setDisabled(checked)
-            self.height_spin.setDisabled(checked)
-            self.x_spin.setDisabled(checked)
-            self.y_spin.setDisabled(checked)
-            screen = self.screen_spin.value()
-            monitor = self.screens[screen - 1]
-            if checked:
-                self.width_spin.setValue(monitor.width)
-                self.height_spin.setValue(monitor.height)
-                self.x_spin.setValue(0)
-                self.y_spin.setValue(0)
-                self.canvas.change_app_view(self.activated_app, 0, 0, monitor.width, monitor.height, screen)
-            else:
-                pos = self.activated_app.get_pos()
-                pos = [(pos[0] - monitor.x), (pos[1] - monitor.y)]
-                self.x_spin.setValue(pos[0])
-                self.x_spin.setRange(0, monitor.width)
-                self.y_spin.setValue(pos[1])
-                self.y_spin.setRange(0, monitor.height)
-                size = self.activated_app.get_size()
-                if size:
-                    self.width_spin.setValue(size[0])
-                    self.height_spin.setValue(size[1])
-                else:
-                    self.width_spin.setValue(monitor.width)
-                    self.height_spin.setValue(monitor.height)
         
     def handle_dir_disable(self, checked):
         if self.activated_app:
@@ -593,13 +652,19 @@ class MainWindow(QMainWindow):
             y = self.y_spin.value()
             width = self.width_spin.value()
             height = self.height_spin.value() 
+            size_stack_index = self.size_stack.currentIndex()
             if not path or not dir:
                 QMessageBox.warning(self, "Missing Info", "Please provide all app information")
             if dir == "None":
                 dir = None
             pos = self.calculate_pos(screen, x, y)
-            size = [width, height]
+            if(size_stack_index == 0):
+                size = Size([width, height])
+            else:
+                size = Size(SIZE_NANE_OPTIONS[size_stack_index - 1])
             self.activated_app.change_app(name, path, dir, pos, size)
+            if(self.activated_app.is_folder()):
+                self.apps_title_label.setText(self.activated_app.get_app_path())
             self.writing_file()
         
     def deleting_app(self):
@@ -611,6 +676,8 @@ class MainWindow(QMainWindow):
                 index += 1
             if(index < len(self.apps)):
                 del self.apps[index]
+                if(len(self.apps) == 0):
+                    self.apps = None
             self.canvas.delete_app_view(self.activated_app)
             self.activated_app = None
             self.apps_title_label.setText("Select an App")
@@ -619,14 +686,16 @@ class MainWindow(QMainWindow):
             self.writing_file()
     
     def create_new_app(self):
-        if(len(self.apps) < 32):
+        if(not self.apps or len(self.apps) < 32):
             name = self.get_new_name()
             path = "c:\\"
             dir = None
             monitor = self.screens[0]
             pos = [monitor.x, monitor.y] 
-            size = [monitor.width, monitor.height]
+            size = Size([monitor.width, monitor.height])
             new_app = App(name, path=path, dir=dir, pos=pos, size=size)
+            if not self.apps:
+                self.apps = []
             self.apps.append(new_app)
             self.canvas.add_app_view(new_app)
             self.update_info_panel(new_app)
@@ -635,6 +704,7 @@ class MainWindow(QMainWindow):
             self.writing_file()
         else:
             QMessageBox.warning(self, "Overflow", "Too much apps getting opened\nWhen the pc is starting up")
+            
                 
     def get_links_list(self):
         return f"{str(self.links)}"
@@ -685,6 +755,8 @@ class MainWindow(QMainWindow):
             self.link_list_layout.addWidget(new_block)
             self.link_name_input.clear()
             self.link_link_input.clear()
+            if not self.links:
+                self.links = []
             self.links.append(link)
             self.writing_file()
 
@@ -698,34 +770,38 @@ class MainWindow(QMainWindow):
                 break
             index += 1
         del self.links[index]
+        if(len(self.links) == 0):
+            self.links = None
         self.writing_file()
     
     def add_existing_links(self):
-        for link in self.links:
-            existing_block = LinkBlock(link, self.delete_link)
-            self.link_list_layout.addWidget(existing_block)
-            self.link_name_input.clear()
-            self.link_link_input.clear()
+        if self.links:
+            for link in self.links:
+                existing_block = LinkBlock(link, self.delete_link)
+                self.link_list_layout.addWidget(existing_block)
+                self.link_name_input.clear()
+                self.link_link_input.clear()
     
     def get_new_name(self):
         n = 0
-        while(n < len(self.apps)):
-            exist = False
-            for app in self.apps:
-                if(n == 0):
-                    if(app.get_name() == "new app"):
-                        exist = True
-                        break
-                else:
-                    if(app.get_name() == f"new app({n})"):
-                        exist = True
-                        break          
-            if not exist:
-                break
-            n += 1
+        if self.apps:
+            while(n < len(self.apps)):
+                exist = False
+                for app in self.apps:
+                    if(n == 0):
+                        if(app.get_name() == "new_app"):
+                            exist = True
+                            break
+                    else:
+                        if(app.get_name() == f"new_app({n})"):
+                            exist = True
+                            break          
+                if not exist:
+                    break
+                n += 1
         if n == 0:
-            return "new app"
-        return f"new app({n})"
+            return "new_app"
+        return f"new_app({n})"
     
     
     def create_header(self, text):
@@ -737,6 +813,47 @@ class MainWindow(QMainWindow):
         monitor = self.screens[screen]
         pos = [x + monitor.x, y + monitor.y]
         return pos
+
+    def get_position_on_monitor(self, info, monitor):
+        pos_x = 0
+        pos_y = 0
+        width = monitor.width
+        heigth = monitor.height
+        half_width = width // 2
+        half_height = heigth // 2
+        match info:
+            case "Top":
+                heigth = half_height
+            case "Bottom":
+                heigth = half_height
+                pos_y += half_height
+            case "Left":
+                width = half_width
+            case "Right":
+                width = half_width
+                pos_x += half_width
+            case "Left_Top":
+                width = half_width
+                heigth = half_height
+            case "Left_Bottom":
+                width = half_width
+                heigth = half_height
+                pos_y += half_height
+            case "Right_Top":
+                width = half_width
+                heigth = half_height
+                pos_x += half_width
+            case "Right_Bottom":
+                width = half_width
+                heigth = half_height
+                pos_x += half_width
+                pos_y += half_height
+        return (pos_x), (pos_y), (width), (heigth)
     
+    def can_be_edited(self, state):
+        self.x_spin.setDisabled(not state)
+        self.y_spin.setDisabled(not state)
+        self.width_spin.setDisabled(not state)
+        self.height_spin.setDisabled(not state)
     def writing_file(self):
         self.saving_file.write_file(self.apps, self.links)

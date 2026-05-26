@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "pygetwindow>=0.0.9",
     "pyqt6>=6.11.0",
     "screeninfo>=0.8.1",
 ]

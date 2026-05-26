@@ -18,6 +18,7 @@ canvas ui ->
         2)לעשות שפשר להגדיל אפליקציות בתאצ'
         3)לעשות שאפשר למחוק ישירות אפליקציות בתאצ
 debuging -> 
+        adding halfs and quarters
         check text file
         user inputs
         operation system

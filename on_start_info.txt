@@ -1,0 +1,14 @@
+<open_apps>
+chrome X:\code\python\on_start\starting_apps\GC.lnk None [0,0] Full
+spotify X:\code\python\on_start\starting_apps\Spotify.lnk None [-1920,7] Left
+explorer X:\code\python\on_start\starting_apps\CODE(X).lnk None [-967,523] Right_Bottom
+mingw64 X:\code\python\on_start\starting_apps\Git_Bash.lnk C:\Users\yairb\ [-967,7] Right_Top
+</open_apps>
+<open_urls>
+Whatsapp https://web.whatsapp.com
+Mail1 https://mail.google.com/mail/u/0/#inbox
+Mail2 https://mail.google.com/mail/u/1/#inbox
+Technion https://portalex.technion.ac.il/irj/portal/external/AdmissionExt
+Gemini https://gemini.google.com/app?_gl=1*tlfhjt*_gcl_au*NjExMzMxNTc0LjE3NjM4NDU5MzIuMTYyOTU5ODI5OS4xNzYzODUwMTIwLjE3NjM4NTAxMjA.*_ga*MjEyNDUzNDgwLjE3NjM4NDU5MzI.*_ga_WC57KJ50ZZ*czE3NjM4NDU5MzIkbzEkZzEkdDE3NjM4NTAxMjQkajE4JGwwJGgw
+spotify spotify:track:3LpHzQU2CZzZJGdUWV79SI
+</open_urls> 

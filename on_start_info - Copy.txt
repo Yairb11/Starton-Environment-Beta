@@ -1,0 +1,7 @@
+<open_apps>
+x:\ X:\ None [0,0] Full
+X:\code\ X:\code\ None [-1920,0] Left_Bottom
+C:\ C:\ None [-1920,0] Top
+</open_apps>
+<open_urls>
+</open_urls>
