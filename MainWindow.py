@@ -1,7 +1,6 @@
-from PyQt6.QtWidgets import (QApplication, QGraphicsView, QGraphicsScene, QGraphicsRectItem,
-                            QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QCheckBox,
+from PyQt6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QCheckBox,
                             QLabel, QFrame, QLineEdit, QTextEdit, QPushButton, QMessageBox, 
-                            QSpinBox, QGridLayout, QFileDialog, QStackedWidget)
+                            QSpinBox, QGridLayout, QFileDialog, QStackedWidget, QScrollArea)
 from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup, QPoint
 from PyQt6.QtWidgets import QFileDialog
 from App import *
@@ -10,6 +9,7 @@ from Link import *
 from LinkBlock import *
 from SavingFile import *
 from Size import *
+from MiniCavas import *
 import os
 
 INFO_PANEL_STYLE = "background-color: #252526;" 
@@ -295,16 +295,6 @@ class MainWindow(QMainWindow):
         size_costum_layout.addWidget(height_lbl, 1, 0)
         size_costum_layout.addWidget(self.height_spin, 1, 1)
         
-        size_full_widget = QWidget()
-        size_left_widget = QWidget()
-        size_right_widget = QWidget()
-        size_top_widget = QWidget()
-        size_bottom_widget = QWidget()
-        size_left_top_widget = QWidget()
-        size_left_bottom_widget = QWidget()
-        size_right_top_widget = QWidget()
-        size_right_bottom_widget = QWidget()
-        
         self.size_lbl = self.create_header("WINDOW STATE")
         size_title = QHBoxLayout()
         size_title_arrows_layout = QVBoxLayout()
@@ -321,17 +311,13 @@ class MainWindow(QMainWindow):
         size_title_arrows_layout.addWidget(size_title_down_btn)
         size_title.addWidget(self.size_lbl)
         size_title.addLayout(size_title_arrows_layout)
-        
+           
         self.size_stack.addWidget(size_costum_widget)
-        self.size_stack.addWidget(size_full_widget)
-        self.size_stack.addWidget(size_left_widget)
-        self.size_stack.addWidget(size_right_widget)
-        self.size_stack.addWidget(size_top_widget)
-        self.size_stack.addWidget(size_bottom_widget)
-        self.size_stack.addWidget(size_left_top_widget)
-        self.size_stack.addWidget(size_left_bottom_widget)
-        self.size_stack.addWidget(size_right_top_widget)
-        self.size_stack.addWidget(size_right_bottom_widget)
+        self.size_stack_widgets = []
+        for i in range(9):
+            size_stack_widget = MiniCanvas(SIZE_NANE_OPTIONS[i], self.screens[0])
+            self.size_stack.addWidget(size_stack_widget)
+            self.size_stack_widgets.append(size_stack_widget)
         self.size_stack.setCurrentIndex(0)  
         
         # --- SAVING ---
@@ -465,17 +451,15 @@ class MainWindow(QMainWindow):
                 self.can_be_edited(False)
                 app_x, app_y, app_width, app_height = self.get_position_on_monitor(size, screen)
                 size_stack_pos = SIZE_STACK_OPTIONS[size]
+                self.size_stack_widgets[size_stack_pos - 1].set_monitor(screen)
                 self.x_spin.setValue(app_x)
                 self.y_spin.setValue(app_y)
                 self.width_spin.setValue(app_width)
                 self.height_spin.setValue(app_height)
-            
             self.size_stack.setCurrentIndex(size_stack_pos)
             self.size_lbl.setText(f"WINDOW STATE - {SIZE_TITLE_OPTIONS[size_stack_pos]}")
-            
             self.apps_title_label.setText(f"{app.get_name()}") 
             self.app_path_input.setText(f"{app.get_app_path()}")
-            
             if(app.get_dir_path()):
                 self.disable_dir_path.setChecked(False)
                 self.dir_path_input.setText(f"{app.get_dir_path()}")
@@ -490,12 +474,12 @@ class MainWindow(QMainWindow):
         new_size_state = (size_state + diff) % max_state
         self.size_stack.setCurrentIndex(new_size_state)
         self.size_lbl.setText(f"WINDOW STATE - {SIZE_TITLE_OPTIONS[new_size_state]}")
-        
         if(new_size_state == 0):
             self.can_be_edited(True)
             return 
         self.can_be_edited(False)
         monitor = self.screens[self.screen_spin.value() - 1]
+        self.size_stack_widgets[new_size_state - 1].set_monitor(monitor)
         new_x = 0
         new_y = 0
         new_width = monitor.width
@@ -512,9 +496,7 @@ class MainWindow(QMainWindow):
         self.y_spin.setValue(new_y)
         self.width_spin.setValue(new_width)
         self.height_spin.setValue(new_height)
-        
-        
-            
+
     def live_update_canvas(self):
         if self.activated_app: 
             x = self.x_spin.value()
@@ -523,6 +505,9 @@ class MainWindow(QMainWindow):
             height = self.height_spin.value()
             screen = self.screen_spin.value()
             self.canvas.change_app_view(self.activated_app, x, y, width, height, screen)
+            size_state = self.size_stack.currentIndex()
+            monitor = self.screens[screen - 1]
+            self.size_stack_widgets[size_state - 1].set_monitor(monitor)
     
     def live_update_panel_from_drag(self, app, real_x, real_y, is_moved):
         if self.activated_app == app:

@@ -1,4 +1,3 @@
-import re
 from Size import *
 class App:
     def __init__(self, name, path = "", dir = "", pos = [0, 0], size = Size([0,0])):
@@ -55,4 +54,5 @@ class App:
     
     def is_folder(self):
         return self.app_path[-1] == "\\"
+    
         

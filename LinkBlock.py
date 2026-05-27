@@ -1,7 +1,5 @@
-from PyQt6.QtWidgets import (QApplication, QGraphicsView, QGraphicsScene, 
-                             QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
-                             QLabel, QFrame, QLineEdit, QPushButton, QSpinBox, 
-                             QGridLayout, QScrollArea, QMessageBox)
+from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, 
+                             QLabel, QFrame, QPushButton)
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMenu
 from PyQt6.QtGui import QAction

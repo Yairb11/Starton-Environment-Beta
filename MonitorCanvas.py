@@ -1,8 +1,6 @@
-from PyQt6.QtWidgets import (QApplication, QGraphicsView, QGraphicsScene, 
-                             QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
-                             QGraphicsRectItem, QLabel, QFrame)
-from PyQt6.QtGui import QBrush, QColor, QPen, QPainter, QCursor
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (QGraphicsView, QGraphicsScene, 
+                             QGraphicsRectItem)
+from PyQt6.QtGui import QBrush, QColor, QPen, QPainter
 from App import *
 from InteractiveAppItem import *
 from Size import *

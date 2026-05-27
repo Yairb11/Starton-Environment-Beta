@@ -9,25 +9,16 @@ import sys
 from PyQt6.QtWidgets import QApplication
 from screeninfo import get_monitors
 
-FILE_PATH = r"C:\Users\yairb\on_start_gui\on_start_info.txt"   
+FILE_PATH = r"<full path to on_start_info.txt>"   
 
 
 def get_full_spcae():
-    # An application instance is required to query the screens
     q_app = QApplication(sys.argv)
     q_screens = q_app.screens()
     work_areas = []
-    for i, screen in enumerate(q_screens):
-        # availableGeometry() calculates the space minus taskbars/docks
+    for screen in q_screens:
         work_rect = screen.availableGeometry()
-        work_areas.append({
-            "monitor_id": i + 1,
-            "x": work_rect.x(),
-            "y": work_rect.y(),
-            "width": work_rect.width(),
-            "height": work_rect.height()
-        })
-        
+        work_areas.append(work_rect)
     screens = []
     monitors = get_monitors()
     for _, monitor in enumerate(monitors):
@@ -81,12 +72,12 @@ def position_apps(apps):
                             win.restore()
                         screen_index = find_screen(screens, pos)
                         work_area = workspaces[screen_index]
-                        pos_x = work_area["x"]
-                        pos_y = work_area["y"]
-                        width = work_area["width"]
-                        heigth = work_area["height"]
-                        half_width = work_area["width"] // 2
-                        half_height = work_area["height"] // 2
+                        pos_x = work_area.x()
+                        pos_y = work_area.y()
+                        width = work_area.width()
+                        heigth = work_area.height()
+                        half_width = work_area.width() // 2
+                        half_height = work_area.height() // 2
                         match size:
                             case "Top":
                                 heigth = half_height
@@ -129,8 +120,6 @@ def on_start():
     if links:
         open_urls(links)  
     print("Finished")
-    
-    
-    
+       
 if __name__ == "__main__":
     on_start()

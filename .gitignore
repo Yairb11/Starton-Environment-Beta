@@ -1,0 +1,11 @@
+# --- Virtual Environments & Local Setup ---
+.venv/
+env/
+.env
+
+
+# --- Python & Build Artifacts ---
+__pycache__/
+
+# --- Testing & Code Quality ---
+on_start_info copy.txt

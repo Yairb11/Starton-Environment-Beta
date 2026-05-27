@@ -7,7 +7,7 @@ from Link import *
 from SavingFile import *
 
 
-FILE_PATH = r"C:\Users\yairb\on_start_gui\on_start_info - Copy.txt"
+FILE_PATH = r"<full path to on_start_info.txt>"
 
 def find_resolution():
     screens = []
@@ -21,7 +21,6 @@ def on_start():
     saving_file = SavingFile(FILE_PATH)
     apps, links = saving_file.read_file()
     return screens, apps, links, saving_file
-
 if __name__ == "__main__":
     screens, apps, links, saving_file = on_start()
     desktop_app = QtWidgets.QApplication(sys.argv)

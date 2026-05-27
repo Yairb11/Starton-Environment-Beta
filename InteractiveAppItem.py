@@ -1,8 +1,6 @@
-from PyQt6.QtWidgets import (QApplication, QGraphicsView, QGraphicsScene, 
-                             QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
-                             QGraphicsRectItem, QLabel, QFrame, QGraphicsItem, QMenu)
-from PyQt6.QtGui import QBrush, QColor, QPen, QPainter, QCursor, QAction
-from PyQt6.QtCore import Qt, QPointF, QRectF
+from PyQt6.QtWidgets import (QGraphicsRectItem, QGraphicsItem, QMenu)
+from PyQt6.QtGui import QBrush, QColor, QPen, QCursor, QAction
+from PyQt6.QtCore import Qt, QPointF
 from App import *
 
 MENU_STYLE = """
@@ -137,7 +135,7 @@ class InteractiveAppItem(QGraphicsRectItem):
                 clamped_x = max(min_x, min(new_pos.x(), max_x))
                 clamped_y = max(min_y, min(new_pos.y(), max_y))
                 distance = (clamped_x**2 + clamped_y**2)**0.5
-                self.is_moved = self.is_moved or distance < 10
+                self.is_moved = self.is_moved or distance > 5
                 if self.pos_callback:
                     self.pos_callback(self.app, (rect.x() + clamped_x), (rect.y() + clamped_y), self.is_moved)
                 return QPointF(clamped_x, clamped_y) 
