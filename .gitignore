@@ -6,6 +6,9 @@ env/
 
 # --- Python & Build Artifacts ---
 __pycache__/
+libraries/__pycache__/
 
 # --- Testing & Code Quality ---
 on_start_info copy.txt
+new.py
+info/
