@@ -1,13 +1,13 @@
+from libraries.MainWindow import *
+from libraries.App import *
+from libraries.Link import *
+from libraries.SavingFile import *
 from screeninfo import get_monitors
 import sys
 import os
 import shutil
 from pathlib import Path
 from PyQt6 import QtWidgets 
-from libraries.MainWindow import *
-from libraries.App import *
-from libraries.Link import *
-from libraries.SavingFile import *
 
 APPDATA_SETUP_PATH = r"%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
 ON_SETUP_INFO_TEXT = '''<open_apps>
@@ -54,7 +54,7 @@ def is_first_time():
     Path(info_files_path).mkdir(parents=True, exist_ok=True)
     launch_apps_file.write_text(bat_script, encoding='utf-8')
     setup_info_path.write_text(ON_SETUP_INFO_TEXT, encoding='utf-8')
-
+    
     if not os.path.exists(startup_launch_app_dest):
         shutil.copy(launch_apps_file, startup_launch_app_dest)
         print("EXit 3")
