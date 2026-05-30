@@ -46,24 +46,29 @@ class SavingFile:
     def get_apps(self, raw_info):
         apps = []  
         if(raw_info != ""):
-            apps_info = raw_info.split("\n")
-            for app_raw_info in apps_info:
-                app_info = app_raw_info.split(" ")
-                app = App(app_info[0])
-                app.set_app_path(app_info[1])
-                if(app_info[2] == "None"):
-                    app.set_dir_path(None)
-                else:
-                    app.set_dir_path(app_info[2])
-                pos_raw_info = app_info[3]
-                pos_info = (pos_raw_info[1:-1]).split(",")
-                pos = [int(pos_info[i]) for i in range(len(pos_info))]
-                app.set_pos(pos)
-                size_raw_info = app_info[4]
-                app.set_size(Size(size_raw_info))   
+            pattern = rf"<app>(.*?)</app>"
+            infos = re.findall(pattern, raw_info, re.DOTALL)
+            for info in infos:
+                app = self.text_to_app(info)
                 apps.append(app)
             return apps
         return None
+    
+    def text_to_app(self,info):
+        app_info = info.split("\n")[1:-1]
+        app = App(app_info[0])
+        app.set_app_path(app_info[1])
+        if(app_info[2] == "None"):
+            app.set_dir_path(None)
+        else:
+            app.set_dir_path(app_info[2])
+        pos_raw_info = app_info[3]
+        pos_info = (pos_raw_info[1:-1]).split(",")
+        pos = [int(pos_info[i]) for i in range(len(pos_info))]
+        app.set_pos(pos)
+        size_raw_info = app_info[4]
+        app.set_size(Size(size_raw_info))  
+        return app 
     
     def get_links(self, raw_info):
         links = []

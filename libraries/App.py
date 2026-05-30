@@ -36,7 +36,7 @@ class App:
     
     def __str__(self):
         pos_str = f"[{self.pos[0]},{self.pos[1]}]"
-        return f"{self.name} {self.app_path} {self.dir_path} {pos_str} {str(self.size)}"
+        return f"<app>\n{self.name}\n{self.app_path}\n{self.dir_path}\n{pos_str}\n{str(self.size)}\n</app>"
     
     def change_app(self, name, app_path, dir_path, pos, size):
         self.name = name
