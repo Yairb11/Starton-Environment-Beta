@@ -58,15 +58,11 @@ class SavingFile:
         app_info = info.split("\n")[1:-1]
         app = App(app_info[0])
         app.set_app_path(app_info[1])
-        if(app_info[2] == "None"):
-            app.set_dir_path(None)
-        else:
-            app.set_dir_path(app_info[2])
-        pos_raw_info = app_info[3]
+        pos_raw_info = app_info[2]
         pos_info = (pos_raw_info[1:-1]).split(",")
         pos = [int(pos_info[i]) for i in range(len(pos_info))]
         app.set_pos(pos)
-        size_raw_info = app_info[4]
+        size_raw_info = app_info[3]
         app.set_size(Size(size_raw_info))  
         return app 
     

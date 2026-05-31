@@ -1,36 +1,33 @@
 import os
 import time
-import pygetwindow as gw 
+import ctypes
 import webbrowser
 from pathlib import Path
 from libraries.App import *
 from libraries.Link import *
 from libraries.SavingFile import *
 import sys
-from PyQt6.QtWidgets import QApplication
 from screeninfo import get_monitors
 
 ON_SETUP_INFO_TEXT = '''<open_apps>
 </open_apps>
 <open_urls>
 </open_urls>'''
+user32 = ctypes.windll.user32
+EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_int, ctypes.c_int)
+SW_MAXIMIZE = 3
+SW_RESTORE = 9
 
 def find_number_of_screens():
     monitors = get_monitors()
     return len(monitors)
 
 def get_full_spcae():
-    q_app = QApplication(sys.argv)
-    q_screens = q_app.screens()
-    work_areas = []
-    for screen in q_screens:
-        work_rect = screen.availableGeometry()
-        work_areas.append(work_rect)
     screens = []
     monitors = get_monitors()
     for _, monitor in enumerate(monitors):
         screens.append(monitor)
-    return screens, work_areas
+    return screens
 
 def find_screen(monitors, pos):
     for i, monitor in enumerate(monitors):
@@ -44,76 +41,96 @@ def window_name_for(path):
         return f"{path} - File Explorer".lower()
     return f"{path[:-1]} - File Explorer".lower()
 
-def open_apps(apps): 
-    for app in apps:
-        if app.get_dir_path():
-            os.chdir(app.get_dir_path())
-        os.startfile(f'"{app.get_app_path()}"')
-        time.sleep(0.1)
-    
+def get_all_visible_windows():
+    """Returns a set of window handles (HWNDs) for all visible top-level windows."""
+    hwnds = set()
+    def callback(hwnd, lParam):
+        if user32.IsWindowVisible(hwnd) and user32.GetWindowTextLengthW(hwnd) > 0:
+            hwnds.add(hwnd)
+        return True
+    user32.EnumWindows(EnumWindowsProc(callback), 0)
+    return hwnds
+
 def open_urls(links):
     for link in links:
         webbrowser.open(link.get_link())
         time.sleep(0.1)
-   
-def position_apps(apps):
-    screens, workspaces = get_full_spcae()
+                         
+def get_position_and_size(pos, size_obj, screens):
+    size = size_obj.get_size()
+    if size_obj.get_is_list():
+        return pos[0], pos[1], size[0], size[1], False
+    screen_index = find_screen(screens, pos)
+    monitor = screens[screen_index] 
+    pos_x = monitor.x
+    pos_y = monitor.y
+    width = monitor.width
+    height = monitor.height
+    half_width = monitor.width // 2
+    half_height = monitor.height // 2
+    if(size == "Full"):
+        return pos[0], pos[1], half_width, half_height, True
+    match size:
+        case "Top":
+            height = half_height
+        case "Bottom":
+            height = half_height
+            pos_y += half_height
+        case "Left":
+            width = half_width
+        case "Right":
+            width = half_width
+            pos_x += half_width
+        case "Left_Top":
+            width = half_width
+            height = half_height
+        case "Left_Bottom":
+            width = half_width
+            height = half_height
+            pos_y += half_height
+        case "Right_Top":
+            width = half_width
+            height = half_height
+            pos_x += half_width
+        case "Right_Bottom":
+            width = half_width
+            height = half_height
+            pos_x += half_width
+            pos_y += half_height
     
-    windows = gw.getAllWindows()
-    for win in windows:
-        for app in apps:
-            if(app.is_folder() and (window_name_for(app.get_app_path()) == win.title.lower())) or ((not app.is_folder()) and (app.get_name().lower() in win.title.lower())):
-                size_obj = app.get_size()
-                size = size_obj.get_size()
-                pos = app.get_pos()
-                win.restore()
-                if size_obj.get_is_list():
-                    win.moveTo(pos[0], pos[1])
-                    win.resizeTo(size[0], size[1])
-                else:
-                    if(size == "Full"):
-                        win.moveTo(pos[0], pos[1])
-                        win.maximize()
-                    else:
-                        if win.isMaximized or win.isMinimized:
-                            win.restore()
-                        screen_index = find_screen(screens, pos)
-                        work_area = workspaces[screen_index]
-                        pos_x = work_area.x()
-                        pos_y = work_area.y()
-                        width = work_area.width()
-                        heigth = work_area.height()
-                        half_width = work_area.width() // 2
-                        half_height = work_area.height() // 2
-                        match size:
-                            case "Top":
-                                heigth = half_height
-                            case "Bottom":
-                                heigth = half_height
-                                pos_y += half_height
-                            case "Left":
-                                width = half_width
-                            case "Right":
-                                width = half_width
-                                pos_x += half_width
-                            case "Left_Top":
-                                width = half_width
-                                heigth = half_height
-                            case "Left_Bottom":
-                                width = half_width
-                                heigth = half_height
-                                pos_y += half_height
-                            case "Right_Top":
-                                width = half_width
-                                heigth = half_height
-                                pos_x += half_width
-                            case "Right_Bottom":
-                                width = half_width
-                                heigth = half_height
-                                pos_x += half_width
-                                pos_y += half_height
-                        win.moveTo(pos_x, pos_y)
-                        win.resizeTo(width, heigth)
+    return pos_x, pos_y, width, height, False
+
+def launch_and_resize(screens, app,  timeout = 10):
+    file_path = app.get_app_path()
+    pos = app.get_pos()
+    size_obj = app.get_size()
+    x, y, width, height, maximize = get_position_and_size(pos, size_obj, screens)
+    before_windows = get_all_visible_windows()
+    os.startfile(f'"{file_path}"')
+    start_time = time.time()
+    new_hwnd = None
+    while time.time() - start_time < timeout:
+        time.sleep(0.4) 
+        current_windows = get_all_visible_windows()
+        new_windows = current_windows - before_windows
+        if new_windows:
+            new_hwnd = list(new_windows)[0]
+            break
+    if not new_hwnd:
+        return 
+    time.sleep(0.5)
+    user32.ShowWindow(new_hwnd, SW_RESTORE)
+    if maximize:
+        user32.MoveWindow(new_hwnd, x, y, width, height, True)
+        user32.ShowWindow(new_hwnd, SW_MAXIMIZE)
+    else:
+        user32.MoveWindow(new_hwnd, x, y, width, height, True)
+    
+def open_apps(apps): 
+    screens = get_full_spcae()
+    for app in apps:
+        launch_and_resize(screens, app)
+    
 
 def is_first_time():
     if getattr(sys, 'frozen', False):
@@ -136,8 +153,6 @@ def on_start():
     apps, links = savingFile.read_file()
     if apps:
         open_apps(apps)
-        time.sleep(3)
-        position_apps(apps)  
     time.sleep(1)  
     if links:
         open_urls(links)  

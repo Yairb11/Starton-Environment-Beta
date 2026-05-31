@@ -1,9 +1,8 @@
 from libraries.Size import *
 class App:
-    def __init__(self, name, path = "", dir = "", pos = [0, 0], size = Size([0,0])):
+    def __init__(self, name, path = "", pos = [0, 0], size = Size([0,0])):
         self.name = name
         self.app_path = path
-        self.dir_path = dir
         self.pos = pos
         self.size = size
     
@@ -15,12 +14,6 @@ class App:
     
     def get_app_path(self):
         return self.app_path
-    
-    def set_dir_path(self, dir_path):
-        self.dir_path = dir_path
-    
-    def get_dir_path(self):
-        return self.dir_path
     
     def set_pos(self, pos):
         self.pos = pos 
@@ -36,12 +29,11 @@ class App:
     
     def __str__(self):
         pos_str = f"[{self.pos[0]},{self.pos[1]}]"
-        return f"<app>\n{self.name}\n{self.app_path}\n{self.dir_path}\n{pos_str}\n{str(self.size)}\n</app>"
+        return f"<app>\n{self.name}\n{self.app_path}\n{pos_str}\n{str(self.size)}\n</app>"
     
-    def change_app(self, name, app_path, dir_path, pos, size):
+    def change_app(self, name, app_path, pos, size):
         self.name = name
         self.app_path = app_path
-        self.dir_path = dir_path
         self.pos = []
         self.pos.append(pos[0])
         self.pos.append(pos[1])
@@ -54,8 +46,15 @@ class App:
     
     def is_folder(self):
         if(self.app_path[-1] == "\\"):
-            self.name = self.app_path
             return True
         return False
+    
+    def get_app_path_folder(self):
+        if self.is_folder():
+            return self.app_path
+        folders = self.app_path.split("\\")[:-1]
+        full_folder = "\\".join(folders)
+        return full_folder
+        
     
         

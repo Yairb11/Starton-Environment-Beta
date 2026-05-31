@@ -6,7 +6,6 @@ Also you can controll the position and size they will open with.
 You can your needed links.
 And more mportantly, can play with the position and sizes inside the canvas itself.
 Dont forget to hit the save button so all your changes will be saved.
-For each app, name it as the name of the window that will open up when it's running
 
 * For the opening part in the startup i used bat file that will sit inside shell:startup folder
 * And the libraries i used for it in my python file (on_start.py) are 
@@ -21,4 +20,3 @@ For each app, name it as the name of the window that will open up when it's runn
 This project is in beta version for now, it has some bugs, almost zero protection on user input and no self installation.
 you will need python installed inside your computer(version 3.12+), all the requirements that are inside the requirements.txt file and for now it works on windows(11 i believe)
 Just run the SetupGUI.exe and it will setup itself on your computer
-If you want to move this file to desktop, use "Create shortcut", else it wont work

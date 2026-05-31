@@ -9,6 +9,6 @@ __pycache__/
 libraries/__pycache__/
 
 # --- Testing & Code Quality ---
-on_start_info copy.txt
+OnSetupInfo_2.txt
 new.py
 info/

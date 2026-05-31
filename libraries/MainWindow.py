@@ -10,8 +10,15 @@ from libraries.LinkBlock import *
 from libraries.SavingFile import *
 from libraries.Size import *
 from libraries.MiniCavas import *
+from libraries.ClickableLineEdit import *
 import os
 
+INFO_PANEL_SCROLL_STYLE = """
+            QScrollArea { border: none; background-color: #252526; border-left: 1px solid #333; }
+            QScrollBar:vertical { background: #252526; width: 10px; }
+            QScrollBar::handle:vertical { background: #555; min-height: 20px; border-radius: 5px; }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+        """
 INFO_PANEL_STYLE = "background-color: #252526;" 
 INFO_PANEL_BTN_STYLE = """
             QPushButton {
@@ -147,10 +154,16 @@ class MainWindow(QMainWindow):
         # --- CANVAS ---
         self.canvas = MonitorCanvas(self.screens, self.apps, self.update_info_panel, self.live_update_panel_from_drag, self.live_update_panel_from_resize, self.handle_deleting_app)
         main_layout.addWidget(self.canvas, stretch=3)
+        self.panel_scroll = QScrollArea()
+        self.panel_scroll.setMaximumWidth(MAX_INFO_PANEL_WIDTH)
+        self.panel_scroll.setMaximumHeight(primary_screen.height)
+        self.panel_scroll.setMinimumHeight(0)
+        self.panel_scroll.setMinimumWidth(0)
+        self.panel_scroll.setStyleSheet(INFO_PANEL_SCROLL_STYLE)
+        
         self.info_panel = QFrame()
         self.info_panel.setStyleSheet(INFO_PANEL_STYLE)
-        self.info_panel.setMaximumWidth(MAX_INFO_PANEL_WIDTH) 
-        self.info_panel.setMinimumWidth(0)
+        self.info_panel.setMaximumWidth(MAX_INFO_PANEL_WIDTH - 35)
         self.info_panel.setContentsMargins(0, 0, 0, 0)
         self.info_panel_toggle_btn = QPushButton("☰", central_widget)
         self.info_panel_toggle_btn.setFixedSize(35, 35)
@@ -209,9 +222,10 @@ class MainWindow(QMainWindow):
         app_title_layout.addWidget(app_title_add_btn)
         
         # --- APP PATH ---
-        self.app_path_input = QLineEdit()
+        self.app_path_input = ClickableLineEdit()
         self.app_path_input.setPlaceholderText("APP OPEN PATH (e.g., C:\\...)")
         self.app_path_input.setStyleSheet(PATH_INPUT_STYLE)   
+        self.app_path_input.clicked.connect(self.browse_for_folder)
         browse_app_path_btn = QPushButton("📂")
         browse_app_path_btn.setToolTip("Browse for Executable")
         browse_app_path_btn.setFixedSize(28, 28)
@@ -222,25 +236,6 @@ class MainWindow(QMainWindow):
         app_path_layout.setSpacing(5)
         app_path_layout.addWidget(self.app_path_input)
         app_path_layout.addWidget(browse_app_path_btn)
-        
-        # --- DIR PATH ---
-        self.dir_path_input = QLineEdit()
-        self.dir_path_input.setPlaceholderText("FROM FOLDER PATH (e.g., C:\\...)")
-        self.dir_path_input.setStyleSheet(PATH_INPUT_STYLE) 
-        self.browse_dir_path_btn = QPushButton("📂")
-        self.browse_dir_path_btn.setToolTip("Browse for Executable")
-        self.browse_dir_path_btn.setFixedSize(28, 28)
-        self.browse_dir_path_btn.setStyleSheet(BROWSE_BTN_STYLE)
-        self.browse_dir_path_btn.clicked.connect(self.browse_for_folder)      
-        self.disable_dir_path = QCheckBox("None")
-        self.disable_dir_path.setStyleSheet(CHECK_STYLE)
-        self.disable_dir_path.toggled.connect(self.handle_dir_disable)
-        dir_lbl = self.create_header("FOLDER PATH")
-        dir_path_layout = QHBoxLayout()
-        dir_path_layout.setSpacing(5)
-        dir_path_layout.addWidget(self.dir_path_input)
-        dir_path_layout.addWidget(self.browse_dir_path_btn)
-        dir_path_layout.addWidget(self.disable_dir_path)
         
         # --- POSITION ---
         pos_layout = QGridLayout()
@@ -274,7 +269,6 @@ class MainWindow(QMainWindow):
         # --- SIZE ---
         max_width, max_height = self.get_max_border()
         self.size_stack = QStackedWidget()
-        
         size_costum_widget = QWidget()
         size_costum_layout = QGridLayout(size_costum_widget)
         size_costum_layout.setContentsMargins(15, 20, 15, 20)
@@ -372,8 +366,6 @@ class MainWindow(QMainWindow):
         # --- EDITOR LAYOUT ---
         editor_layout.addWidget(path_lbl)
         editor_layout.addLayout(app_path_layout)
-        editor_layout.addWidget(dir_lbl)
-        editor_layout.addLayout(dir_path_layout)
         editor_layout.addWidget(position_lbl)
         editor_layout.addLayout(pos_layout)
         editor_layout.addLayout(size_title)
@@ -390,7 +382,8 @@ class MainWindow(QMainWindow):
         panel_layout.addWidget(links_title_label)
         panel_layout.addLayout(add_link_layout)
         panel_layout.addWidget(self.link_scroll_area, stretch=1)
-        main_layout.addWidget(self.info_panel, stretch=1)
+        self.panel_scroll.setWidget(self.info_panel)
+        main_layout.addWidget(self.panel_scroll, stretch=1)
         
         # --- FINAL SETUP ---
         self.apps_title_label.setDisabled(True)
@@ -407,9 +400,9 @@ class MainWindow(QMainWindow):
             target_panel_width = MAX_INFO_PANEL_WIDTH
             target_btn_x = self.width() - target_panel_width + 30
             btn_str = "☰"
-        info_panel_anim = QPropertyAnimation(self.info_panel, b"maximumWidth")
+        info_panel_anim = QPropertyAnimation(self.panel_scroll, b"maximumWidth")
         info_panel_anim.setDuration(350)
-        info_panel_anim.setStartValue(self.info_panel.width())
+        info_panel_anim.setStartValue(self.panel_scroll.width())
         info_panel_anim.setEndValue(target_panel_width)
         info_panel_anim.setEasingCurve(QEasingCurve.Type.InOutQuart)
         info_panel_btn_anim = QPropertyAnimation(self.info_panel_toggle_btn, b"pos")
@@ -426,6 +419,7 @@ class MainWindow(QMainWindow):
         
     def update_info_panel(self, app): 
         if not(self.activated_app) or self.activated_app != app:
+            print(app.get_app_path())
             self.apps_title_label.setDisabled(False)
             self.panel_stack.setCurrentIndex(1)
             self.activated_app = app
@@ -460,11 +454,6 @@ class MainWindow(QMainWindow):
             self.size_lbl.setText(f"WINDOW STATE - {SIZE_TITLE_OPTIONS[size_stack_pos]}")
             self.apps_title_label.setText(f"{app.get_name()}") 
             self.app_path_input.setText(f"{app.get_app_path()}")
-            if(app.get_dir_path()):
-                self.disable_dir_path.setChecked(False)
-                self.dir_path_input.setText(f"{app.get_dir_path()}")
-            else:
-                self.disable_dir_path.setChecked(True)
             if(not self.is_panel_open):
                 self.toggle_info_panel()
     
@@ -571,18 +560,6 @@ class MainWindow(QMainWindow):
                 index += 1
             if(index < app_count):
                 self.update_info_panel(self.apps[(index - 1) % app_count])
-        
-    def handle_dir_disable(self, checked):
-        if self.activated_app:
-            self.dir_path_input.setDisabled(checked)
-            self.browse_dir_path_btn.setDisabled(checked)
-            if checked:
-                self.dir_path_input.setText("None")
-            else:
-                if(self.activated_app.get_dir_path()):
-                    self.dir_path_input.setText(self.activated_app.get_dir_path())
-                else:
-                    self.dir_path_input.setText("C:\\")
                 
     def handle_deleting_app(self, deleted_app):
         if not self.activated_app == deleted_app:
@@ -614,10 +591,8 @@ class MainWindow(QMainWindow):
     
     def browse_for_folder(self) :
         if self.activated_app:
-            path = self.activated_app.get_dir_path()
-            if not(path):
-                path = r"C:\\"
-            
+            path = self.activated_app.get_app_path_folder()
+            print(path)
             file_path = QFileDialog.getExistingDirectory(
                 self,
                 "Select Target Folder",
@@ -625,33 +600,25 @@ class MainWindow(QMainWindow):
             )
             if file_path:
                 normalized_path = os.path.normpath(file_path)
-                self.dir_path_input.setText(normalized_path)
+                self.app_path_input.setText(normalized_path)
+                self.apps_title_label.setText(normalized_path)
     
     def saving_app(self):
         if self.activated_app:
             name = self.apps_title_label.toPlainText().lower()
             path = self.app_path_input.text().strip()
-            dir = self.dir_path_input.text().strip()
             screen = self.screen_spin.value() - 1
             x = self.x_spin.value()
             y = self.y_spin.value()
             width = self.width_spin.value()
             height = self.height_spin.value() 
             size_stack_index = self.size_stack.currentIndex()
-            if not path or not dir:
-                QMessageBox.warning(self, "Missing Info", "Please provide all app information")
-            if dir == "None":
-                dir = None
             pos = self.calculate_pos(screen, x, y)
             if(size_stack_index == 0):
                 size = Size([width, height])
             else:
                 size = Size(SIZE_NANE_OPTIONS[size_stack_index - 1])
-            self.activated_app.change_app(name, path, dir, pos, size)
-            if(self.activated_app.is_folder()):
-                self.apps_title_label.setText(self.activated_app.get_app_path())
-                name = self.activated_app.get_app_path()
-
+            self.activated_app.change_app(name, path, pos, size)
             self.writing_file()
         
     def deleting_app(self):
