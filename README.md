@@ -1,22 +1,49 @@
 This is python bases desktop application that meant to help with opening all needed applications and links on the start of your computer.
-This project i could separate into 2 pieces, the opening part(on_start.py) and the desktop application part(main.py)
+***--- (On Windows only) ---***
+***--- (Must have python 3.12+) ---***
+***--- (This project is still in Beta version) ---***
+***--- (May contian bugs) ---***
 
-With this ui/ux you can decide all the apps you want to open with there paths
-Also you can controll the position and size they will open with.
-You can your needed links.
-And more mportantly, can play with the position and sizes inside the canvas itself.
-Dont forget to hit the save button so all your changes will be saved.
+*Recommendations:*
+1) In windows settings, apps -> Startup, unable all startup applications
+![settings image](pictures\Startup_windows_img.png)
+2) In startup folder, delete all applications. Use win+R key and type: shell:startup
+![folder image](pictures\Startup_folder_img.png)
 
-* For the opening part in the startup i used bat file that will sit inside shell:startup folder
-* And the libraries i used for it in my python file (on_start.py) are 
-* 1) os for opening the desired apps
-* 2) pygetwindow to find the window, position and resize it
-* 3) webbrowser to open the links desired
+*To Setup Application:*
+1) Copy the path of requirements.txt from this project
+2) Open cmd and type: pip install -r <requirements.txt path>
+3) Run SetupGUI.exe from this project
+4) That is it.
 
-* For the desktop application i used only python files and libraries, i used mostly one library
-* PyQt6
-* This library has inside of it a lor of ui and ux features like widgets, actions, animation and more.
+*Things to do in the Application:*
+* If there isnt an app, you can open the info panel, then add new app with the + button 
+* You can close and open the info panel whenever you want
+The Info PaneL:
+![info panel image](pictures/info_panel_img.png)
 
-This project is in beta version for now, it has some bugs, almost zero protection on user input and no self installation.
-you will need python installed inside your computer(version 3.12+), all the requirements that are inside the requirements.txt file and for now it works on windows(11 i believe)
-Just run the SetupGUI.exe and it will setup itself on your computer
+* You can also change position and resize the application in the canvas by hand:
+Canvas:
+![canvas videp](pictures\canvas_video.mp4)
+
+When you created all your setup environment ypu can close the app.
+When you reopen your pc this environment will show up
+
+*How to delete:*
+If you want to delete this application
+1) Delete it like a usual git clone.
+2) Go to startup folder: Use win+R key and type: shell:startup, and delete "launch_apps.bat" file
+![delete folder image](pictures\Startup_folder_img.png)
+
+*A LITLE BIT ABOUT THE PROJECT*
+I wanted to setup my environment on my computer.
+But every time i closed and opened the computer, I needed to create this env again, it would take me 5 minutes at least.
+So I created this project for that, create your env one time and it will work a million more.
+
+This project I could separate into 2 pieces, the opening part(OnSetup.py) and the desktop application part(SetupGUI.py)
+For the UI/UX I used PyQt6 library and it is the most used in this project.
+This library has the basic widgets from QtWidgets but with a twist of styling with css.
+Moreover, i could preform event listener for my ux with this library's built in functions, from QtGui.
+Thats it. Take a look at the project
+***--- (This project is still in Beta version) ---***
+***--- (May contian bugs) ---***
