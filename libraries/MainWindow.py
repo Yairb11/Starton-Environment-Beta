@@ -13,12 +13,6 @@ from libraries.MiniCavas import *
 from libraries.ClickableLineEdit import *
 import os
 
-INFO_PANEL_SCROLL_STYLE = """
-            QScrollArea { border: none; background-color: #252526; border-left: 1px solid #333; }
-            QScrollBar:vertical { background: #252526; width: 10px; }
-            QScrollBar::handle:vertical { background: #555; min-height: 20px; border-radius: 5px; }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
-        """
 INFO_PANEL_STYLE = "background-color: #252526;" 
 INFO_PANEL_BTN_STYLE = """
             QPushButton {
@@ -140,6 +134,7 @@ class MainWindow(QMainWindow):
         self.activated_app = None
         self.is_panel_open = True
         
+        
         # --- WINDOW ---
         self.setWindowTitle("SetupGUI - Beta")
         primary_screen = self.get_primary_screen()
@@ -154,16 +149,9 @@ class MainWindow(QMainWindow):
         # --- CANVAS ---
         self.canvas = MonitorCanvas(self.screens, self.apps, self.update_info_panel, self.live_update_panel_from_drag, self.live_update_panel_from_resize, self.handle_deleting_app)
         main_layout.addWidget(self.canvas, stretch=3)
-        self.panel_scroll = QScrollArea()
-        self.panel_scroll.setMaximumWidth(MAX_INFO_PANEL_WIDTH)
-        self.panel_scroll.setMaximumHeight(primary_screen.height)
-        self.panel_scroll.setMinimumHeight(0)
-        self.panel_scroll.setMinimumWidth(0)
-        self.panel_scroll.setStyleSheet(INFO_PANEL_SCROLL_STYLE)
-        
         self.info_panel = QFrame()
         self.info_panel.setStyleSheet(INFO_PANEL_STYLE)
-        self.info_panel.setMaximumWidth(MAX_INFO_PANEL_WIDTH - 35)
+        self.info_panel.setMaximumWidth(MAX_INFO_PANEL_WIDTH)
         self.info_panel.setContentsMargins(0, 0, 0, 0)
         self.info_panel_toggle_btn = QPushButton("☰", central_widget)
         self.info_panel_toggle_btn.setFixedSize(35, 35)
@@ -382,8 +370,7 @@ class MainWindow(QMainWindow):
         panel_layout.addWidget(links_title_label)
         panel_layout.addLayout(add_link_layout)
         panel_layout.addWidget(self.link_scroll_area, stretch=1)
-        self.panel_scroll.setWidget(self.info_panel)
-        main_layout.addWidget(self.panel_scroll, stretch=1)
+        main_layout.addWidget(self.info_panel, stretch=1)
         
         # --- FINAL SETUP ---
         self.apps_title_label.setDisabled(True)
@@ -400,9 +387,9 @@ class MainWindow(QMainWindow):
             target_panel_width = MAX_INFO_PANEL_WIDTH
             target_btn_x = self.width() - target_panel_width + 30
             btn_str = "☰"
-        info_panel_anim = QPropertyAnimation(self.panel_scroll, b"maximumWidth")
+        info_panel_anim = QPropertyAnimation(self.info_panel, b"maximumWidth")
         info_panel_anim.setDuration(350)
-        info_panel_anim.setStartValue(self.panel_scroll.width())
+        info_panel_anim.setStartValue(self.info_panel.width())
         info_panel_anim.setEndValue(target_panel_width)
         info_panel_anim.setEasingCurve(QEasingCurve.Type.InOutQuart)
         info_panel_btn_anim = QPropertyAnimation(self.info_panel_toggle_btn, b"pos")
@@ -419,7 +406,6 @@ class MainWindow(QMainWindow):
         
     def update_info_panel(self, app): 
         if not(self.activated_app) or self.activated_app != app:
-            print(app.get_app_path())
             self.apps_title_label.setDisabled(False)
             self.panel_stack.setCurrentIndex(1)
             self.activated_app = app
@@ -592,7 +578,6 @@ class MainWindow(QMainWindow):
     def browse_for_folder(self) :
         if self.activated_app:
             path = self.activated_app.get_app_path_folder()
-            print(path)
             file_path = QFileDialog.getExistingDirectory(
                 self,
                 "Select Target Folder",
@@ -643,11 +628,10 @@ class MainWindow(QMainWindow):
         if(not self.apps or len(self.apps) < 32):
             name = self.get_new_name()
             path = "c:\\"
-            dir = None
             monitor = self.screens[0]
             pos = [monitor.x, monitor.y] 
             size = Size([monitor.width, monitor.height])
-            new_app = App(name, path=path, dir=dir, pos=pos, size=size)
+            new_app = App(name, path=path, pos=pos, size=size)
             if not self.apps:
                 self.apps = []
             self.apps.append(new_app)

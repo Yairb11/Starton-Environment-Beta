@@ -6,6 +6,9 @@ from pathlib import Path
 from libraries.App import *
 from libraries.Link import *
 from libraries.SavingFile import *
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QRect
+from PyQt6.QtGui import QScreen
 import sys
 from screeninfo import get_monitors
 
@@ -15,6 +18,7 @@ ON_SETUP_INFO_TEXT = '''<open_apps>
 </open_urls>'''
 user32 = ctypes.windll.user32
 EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_int, ctypes.c_int)
+
 SW_MAXIMIZE = 3
 SW_RESTORE = 9
 
@@ -22,12 +26,33 @@ def find_number_of_screens():
     monitors = get_monitors()
     return len(monitors)
 
+def find_screen_combination():
+    combination = ""
+    monitors = get_monitors()
+    for _, monitor in enumerate(monitors):
+        if(monitor.width >= monitor.height):
+            combination = combination + "L"
+        else:
+            combination = combination + "P"
+    return combination
+
 def get_full_spcae():
     screens = []
     monitors = get_monitors()
     for _, monitor in enumerate(monitors):
         screens.append(monitor)
-    return screens
+        
+    q_app = QApplication(sys.argv)
+    q_screens = q_app.screens()
+    work_areas = []
+    for i, screen in enumerate(q_screens):
+        monitor = screens[i]
+        geometry = screen.geometry()
+        available_geometry = screen.availableGeometry()
+        change_in_geometry = [geometry.width() - available_geometry.width(), geometry.height() - available_geometry.height()]
+        work_area = QRect(geometry.x(), geometry.y(), monitor.width - change_in_geometry[0], monitor.height - change_in_geometry[1])
+        work_areas.append(work_area)
+    return screens, work_areas
 
 def find_screen(monitors, pos):
     for i, monitor in enumerate(monitors):
@@ -42,7 +67,6 @@ def window_name_for(path):
     return f"{path[:-1]} - File Explorer".lower()
 
 def get_all_visible_windows():
-    """Returns a set of window handles (HWNDs) for all visible top-level windows."""
     hwnds = set()
     def callback(hwnd, lParam):
         if user32.IsWindowVisible(hwnd) and user32.GetWindowTextLengthW(hwnd) > 0:
@@ -56,18 +80,18 @@ def open_urls(links):
         webbrowser.open(link.get_link())
         time.sleep(0.1)
                          
-def get_position_and_size(pos, size_obj, screens):
+def get_position_and_size(pos, size_obj, screens, workspaces):
     size = size_obj.get_size()
     if size_obj.get_is_list():
-        return pos[0], pos[1], size[0], size[1], False
+        return pos[0] , pos[1], size[0], size[1], False
     screen_index = find_screen(screens, pos)
-    monitor = screens[screen_index] 
-    pos_x = monitor.x
-    pos_y = monitor.y
-    width = monitor.width
-    height = monitor.height
-    half_width = monitor.width // 2
-    half_height = monitor.height // 2
+    monitor = workspaces[screen_index] 
+    pos_x = monitor.left()
+    pos_y = monitor.top()
+    width = monitor.right() - monitor.left()
+    height = monitor.bottom() - monitor.top()
+    half_width = ((monitor.right() - monitor.left())// 2)
+    half_height = ((monitor.bottom() - monitor.top())// 2)
     if(size == "Full"):
         return pos[0], pos[1], half_width, half_height, True
     match size:
@@ -100,11 +124,11 @@ def get_position_and_size(pos, size_obj, screens):
     
     return pos_x, pos_y, width, height, False
 
-def launch_and_resize(screens, app,  timeout = 10):
+def launch_and_resize(screens, workspaces, app,  timeout = 10):
     file_path = app.get_app_path()
     pos = app.get_pos()
     size_obj = app.get_size()
-    x, y, width, height, maximize = get_position_and_size(pos, size_obj, screens)
+    x, y, width, height, maximize = get_position_and_size(pos, size_obj, screens, workspaces)
     before_windows = get_all_visible_windows()
     os.startfile(f'"{file_path}"')
     start_time = time.time()
@@ -121,29 +145,32 @@ def launch_and_resize(screens, app,  timeout = 10):
     time.sleep(0.5)
     user32.ShowWindow(new_hwnd, SW_RESTORE)
     if maximize:
-        user32.MoveWindow(new_hwnd, x, y, width, height, True)
+        user32.MoveWindow(new_hwnd, int(x), int(y), int(width), int(height), True)
+        user32.MoveWindow(new_hwnd, int(x), int(y), int(width), int(height), True)
         user32.ShowWindow(new_hwnd, SW_MAXIMIZE)
     else:
-        user32.MoveWindow(new_hwnd, x, y, width, height, True)
+        user32.MoveWindow(new_hwnd, int(x), int(y), int(width), int(height), True)
+        user32.MoveWindow(new_hwnd, int(x), int(y), int(width), int(height), True)
     
 def open_apps(apps): 
-    screens = get_full_spcae()
+    screens, workspaces = get_full_spcae()
     for app in apps:
-        launch_and_resize(screens, app)
-    
+        launch_and_resize(screens, workspaces, app)
 
 def is_first_time():
     if getattr(sys, 'frozen', False):
         project_dit = Path(sys.executable).parent.resolve()
     else:
         project_dit = Path(__file__).parent.resolve()  
+    number_of_screens = find_number_of_screens()
+    screen_combination = find_screen_combination()
     info_files_path = project_dit / "info"
-    setup_info_path = info_files_path / f"OnSetupInfo_{find_number_of_screens()}.txt"
+    setup_info_path = info_files_path / f"OnSetupInfo_{number_of_screens}{screen_combination}.txt"
     if os.path.exists(setup_info_path): 
         print("Exit 0")
         return setup_info_path
     setup_info_path.write_text(ON_SETUP_INFO_TEXT, encoding='utf-8')
-    return setup_info_path
+    return setup_info_path 
         
                        
 def on_start():       
@@ -153,7 +180,7 @@ def on_start():
     apps, links = savingFile.read_file()
     if apps:
         open_apps(apps)
-    time.sleep(1)  
+    time.sleep(1)
     if links:
         open_urls(links)  
     print("Finished")

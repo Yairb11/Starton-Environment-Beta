@@ -3,7 +3,6 @@
 env/
 .env
 
-
 # --- Python & Build Artifacts ---
 __pycache__/
 libraries/__pycache__/
@@ -11,4 +10,5 @@ libraries/__pycache__/
 # --- Testing & Code Quality ---
 OnSetupInfo_2.txt
 new.py
+createxexe.py
 info/

@@ -25,14 +25,26 @@ def find_resolution():
 def find_number_of_screens():
     monitors = get_monitors()
     return len(monitors)
-        
+
+def find_screen_combination():
+    combination = ""
+    monitors = get_monitors()
+    for _, monitor in enumerate(monitors):
+        if(monitor.width >= monitor.height):
+            combination = combination + "L"
+        else:
+            combination = combination + "P"
+    return combination
+       
 def is_first_time():
     if getattr(sys, 'frozen', False):
         project_dit = Path(sys.executable).parent.resolve()
     else:
         project_dit = Path(__file__).parent.resolve()  
+    number_of_screens = find_number_of_screens()
+    screen_combination = find_screen_combination()
     info_files_path = project_dit / "info"
-    setup_info_path = info_files_path / f"OnSetupInfo_{find_number_of_screens()}.txt"
+    setup_info_path = info_files_path / f"OnSetupInfo_{number_of_screens}{screen_combination}.txt"
     launch_apps_file = info_files_path / "launch_apps.bat"
     on_setup_file = project_dit / "OnSetup.py"
     startup_folder = Path(os.path.expandvars(APPDATA_SETUP_PATH))
@@ -70,9 +82,12 @@ def on_start(file_path):
 if __name__ == "__main__":
     file_path = is_first_time()
     screens, apps, links, saving_file = on_start(file_path)
+    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
+    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
+    os.environ["QT_FONT_DPI"] = "96"
     desktop_app = QtWidgets.QApplication(sys.argv)
     window = MainWindow(screens, apps, links, saving_file)
     window.show()
-    desktop_app.exec()
+    sys.exit(desktop_app.exec())
 
 
