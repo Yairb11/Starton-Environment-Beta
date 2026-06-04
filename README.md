@@ -1,4 +1,4 @@
-### **Starton Environment - Beta**
+# **Starton Environment - Beta**
 
 This is python bases desktop application that meant to help with creating your environment on starting the computer.
 What it means? Now you can decide what apps(size and position) and what links and tabs will open on your screen when you turn on your computer.
@@ -26,8 +26,8 @@ The Info PaneL:
 ![info panel image](pictures/info_panel_img.png)
 
 * You can also change position and resize the application in the canvas by hand:
-> Canvas:
-> ![canvas videp](pictures\canvas_video.mp4)
+Canvas:
+![canvas videp](pictures\canvas_video.mp4)
 
 *When you created all your setup environment ypu can close the app.*
 *When you reopen your pc this environment will show up*
