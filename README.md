@@ -2,10 +2,15 @@
 
 This is python bases desktop application that meant to help with creating your environment on starting the computer.
 What it means? Now you can decide what apps(size and position) and what links and tabs will open on your screen when you turn on your computer.
+
 **--- (On Windows only) ---**
+
 **--- (Must have python 3.12+) ---**
+
 **--- (This project is still in Beta version) ---**
+
 **--- (May contian bugs) ---**
+
 
 ## **Recommendations**:
 1) In windows settings, apps -> Startup, unable all startup applications
@@ -29,8 +34,12 @@ The Info PaneL:
 Canvas:
 ![canvas videp](pictures\canvas_video.mp4)
 
-*When you created all your setup environment ypu can close the app.*
-*When you reopen your pc this environment will show up*
+
+### **Most of the time there isnt autosave so be carefull**
+
+### When you created all your setup environment you can close the app.
+
+### When you reopen your pc the environment you saved will show up
 
 ## How to delete:
 If you want to delete this application
@@ -48,5 +57,7 @@ For the UI/UX I used PyQt6 library and it is the most used in this project.
 This library has the basic widgets from QtWidgets but with a twist of styling with css.
 Moreover, i could preform event listener for my ux with this library's built in functions, from QtGui.
 Thats it. Take a look at the project
+
 **--- (This project is still in Beta version) ---**
+
 **--- (May contian bugs) ---**
