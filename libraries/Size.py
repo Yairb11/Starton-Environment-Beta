@@ -1,7 +1,18 @@
 CONS_OPTIONS = ["Full", "Top", "Bottom", "Left", "Right", "Left_Top", "Right_Top", "Left_Bottom", "Right_Bottom"]
 
 class Size:
+    """Stores information about size of a window
+    
+    Attributes:
+        is_list(list): is the window size is constant
+        size(str / list): is the size of a window, if it constatn size then list of width and height size, else one of CONS_OPTIONS
+    """
     def __init__(self, size_info):
+        """From the size_info decides if size is constant or one of CONS_OPTIONS, then initiates size state
+
+        Args:
+            size_info (str / list): size information of a window
+        """
         if(str(type(size_info)) == "<class \'str'>"):
             if(size_info in CONS_OPTIONS):
                 self.size = size_info

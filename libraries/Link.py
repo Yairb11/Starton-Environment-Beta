@@ -1,5 +1,17 @@
 class Link:
+    """Stores information about the link that would be oppend on setup environment\
+    
+    Attributes:
+        name(string): name of the link
+        link(strinf): the link itself
+    """
     def __init__(self, name, link):
+        """Initializes link information
+
+        Args:
+            name(string): name of the link
+            link(string): the link itself
+        """
         self.name = name
         self.link = link
     

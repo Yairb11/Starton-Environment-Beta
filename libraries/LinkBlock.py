@@ -31,7 +31,18 @@ QMenu::item:selected {
 """
 
 class LinkBlock(QFrame):
+    """
+    A custom QFrame widget that displays a single link entry.
+    It provides a visual block containing the link's name, a clickable HTML URL, 
+    a dedicated delete button, and a right-click context menu for deletion.
+    """
     def __init__(self, link, delete_callback):
+        """Initializes the LinkBlock widget, setting up its layouts, labels, and styles.
+
+        Args:
+            link (Link): Link stored
+            delete_callback: deleting function
+        """
         # --- BASIC SETUP ---
         super().__init__()
         self.link = link
@@ -65,6 +76,11 @@ class LinkBlock(QFrame):
         layout.addWidget(self.del_btn)
     
     def show_context_menu(self, position):
+        """Generates and displays a custom right-click context menu for the widget.
+
+        Args:
+            position: The local coordinate point where the user right-clicked.
+        """
         context_menu = QMenu(self)
         context_menu.setStyleSheet(MENU_STYLE)
         delete_action = QAction("🗑️ Delete Link", self)

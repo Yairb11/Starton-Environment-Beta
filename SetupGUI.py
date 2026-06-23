@@ -16,6 +16,11 @@ ON_SETUP_INFO_TEXT = '''<open_apps>
 </open_urls>'''
 
 def find_resolution():
+    """Saves all monitors information into one list
+
+    Returns:
+        list: list of all monitor information
+    """
     screens = []
     monitors = get_monitors()
     for _, monitor in enumerate(monitors):
@@ -23,10 +28,20 @@ def find_resolution():
     return screens
 
 def find_number_of_screens():
+    """returns number of monitors that are connected to the computer
+
+    Returns:
+        number: number of monitors that are connected to the computer
+    """
     monitors = get_monitors()
     return len(monitors)
 
 def find_screen_combination():
+    """finds each monitor layout for saving them(L - landscape, P - portrait)
+
+    Returns:
+        string: all monitor layouts
+    """
     combination = ""
     monitors = get_monitors()
     for _, monitor in enumerate(monitors):
@@ -37,6 +52,12 @@ def find_screen_combination():
     return combination
        
 def is_first_time():
+    """Checks if its the first time running this .exe, it make sure that all the file exist in the right place
+    then returns the path to the saveFile with all the information
+
+    Returns:
+        string: path to the saveFile with all the information
+    """
     if getattr(sys, 'frozen', False):
         project_dit = Path(sys.executable).parent.resolve()
     else:
@@ -66,7 +87,7 @@ def is_first_time():
     Path(info_files_path).mkdir(parents=True, exist_ok=True)
     launch_apps_file.write_text(bat_script, encoding='utf-8')
     setup_info_path.write_text(ON_SETUP_INFO_TEXT, encoding='utf-8')
-    
+    print(ON_SETUP_INFO_TEXT)
     if not os.path.exists(startup_launch_app_dest):
         shutil.copy(launch_apps_file, startup_launch_app_dest)
         print("EXit 3")
@@ -75,11 +96,23 @@ def is_first_time():
     return setup_info_path
         
 def on_start(file_path):
+    """Gets all the information from the monitors and the saveFile to start the .exe application
+
+    Args:
+        file_path (string): file path of the saveFile
+
+    Returns:
+        list: list of all screen information
+        list: list of all apps information
+        list: list of all links information
+        SaveFile: the saveFile file
+    """
     screens = find_resolution()
     saving_file = SavingFile(file_path)
     apps, links = saving_file.read_file()
     return screens, apps, links, saving_file
 if __name__ == "__main__":
+    """Runs when the .exe file executed and executes the window with all the information needed """
     file_path = is_first_time()
     screens, apps, links, saving_file = on_start(file_path)
     os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"

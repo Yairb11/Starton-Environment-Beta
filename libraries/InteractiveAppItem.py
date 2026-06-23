@@ -18,7 +18,26 @@ HOVER_COLOR = QColor("#2b88d8")
 SELECTED_COLOR = QColor("#6aaee9")  
 
 class InteractiveAppItem(QGraphicsRectItem):
+    """Creates interactive rectangle that will represent some window of an app in setup environment
+    it will include, resizing, positioning and deletion 
+    """
     def __init__(self, x, y, width, height, app, z, bounds, click_callback=None, pos_callback=None, size_callback=None, delete_callback=None):
+        """Initiates InteractiveAppItem with some window information,
+        and creates the rectangle for this window
+
+        Args:
+            x (number): x position
+            y (number): y position
+            width (number): width
+            height (number): height
+            app (App): App object
+            z (number): view order for better experience
+            bounds (list): list of full monitors bounds
+            click_callback (optional): function for on clicking. Defaults to None.
+            pos_callback (optional): function for positioning. Defaults to None.
+            size_callback (optional): function for resizing. Defaults to None.
+            delete_callback (optional): function for deletion. Defaults to None.
+        """
         super().__init__(x, y, width, height)
         self.app = app
         self.click_callback = click_callback
@@ -62,6 +81,8 @@ class InteractiveAppItem(QGraphicsRectItem):
         super().hoverMoveEvent(event)    
         
     def mouseReleaseEvent(self, event):
+        """activates when user stom pressing on the mouse, and changes all the information
+        """
         self.setCursor(QCursor(Qt.CursorShape.OpenHandCursor))
         if self._is_resizing:
             self._is_resizing = False
@@ -78,6 +99,9 @@ class InteractiveAppItem(QGraphicsRectItem):
             super().mouseReleaseEvent(event) 
     
     def mousePressEvent(self, event):
+        """activated on mouse press and makes this app and rectangle selected (for the infopanel and more)
+        then checks if the position of the click is for resizing or not
+        """
         self.is_moved = False
         click_pos = event.scenePos()
         app_under_cursor = self.scene().items(click_pos)
@@ -101,6 +125,8 @@ class InteractiveAppItem(QGraphicsRectItem):
                     self.click_callback(self.app)
                        
     def mouseMoveEvent(self, event):
+        """activated on mouse movement when clicked on the rectangle, and is for resizing
+        """
         if self._is_resizing:
             rect = self.rect()
             new_width =  min(max(event.pos().x() - rect.x(), self._resize_margin + 8), self.bounds[1] - rect.x())
@@ -112,6 +138,8 @@ class InteractiveAppItem(QGraphicsRectItem):
             super().mouseMoveEvent(event)
             
     def contextMenuEvent(self, event):
+        """activated on right click and create the option for the user to delete
+        """
         context_menu = QMenu()
         context_menu.setStyleSheet(MENU_STYLE)
         delete_action = QAction("🗑️ Delete App", context_menu)
@@ -121,27 +149,40 @@ class InteractiveAppItem(QGraphicsRectItem):
         event.accept()
 
     def execute_delete(self):
+        """deleting app and window
+        """
         if self.delete_callback:
             self.delete_callback(self.app)
             
     def itemChange(self, change, value):
-            if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange and self.bounds:
-                new_pos = value 
-                rect = self.rect()
-                min_x = self.bounds[0] - rect.x()
-                max_x = self.bounds[1] - (rect.x() + rect.width())
-                min_y = self.bounds[2] - rect.y()
-                max_y = self.bounds[3] - (rect.y() + rect.height())
-                clamped_x = max(min_x, min(new_pos.x(), max_x))
-                clamped_y = max(min_y, min(new_pos.y(), max_y))
-                distance = (clamped_x**2 + clamped_y**2)**0.5
-                self.is_moved = self.is_moved or distance > 5
-                if self.pos_callback:
-                    self.pos_callback(self.app, (rect.x() + clamped_x), (rect.y() + clamped_y), self.is_moved)
-                return QPointF(clamped_x, clamped_y) 
-            return super().itemChange(change, value)
+        """Checks if there was some movement with the rectangle interface,
+        enough for moving this rectangle or not
+        """
+        if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange and self.bounds:
+            new_pos = value 
+            rect = self.rect()
+            min_x = self.bounds[0] - rect.x()
+            max_x = self.bounds[1] - (rect.x() + rect.width())
+            min_y = self.bounds[2] - rect.y()
+            max_y = self.bounds[3] - (rect.y() + rect.height())
+            clamped_x = max(min_x, min(new_pos.x(), max_x))
+            clamped_y = max(min_y, min(new_pos.y(), max_y))
+            distance = (clamped_x**2 + clamped_y**2)**0.5
+            self.is_moved = self.is_moved or distance > 5
+            if self.pos_callback:
+                self.pos_callback(self.app, (rect.x() + clamped_x), (rect.y() + clamped_y), self.is_moved)
+            return QPointF(clamped_x, clamped_y) 
+        return super().itemChange(change, value)
     
     def find_app_item(self, app):
+        """Checks if the entering argument app is the same as stored app
+
+        Args:
+            app (App): entering argument app
+
+        Returns:
+            bool: is the same as stored app
+        """
         return self.app == app
     
     def get_app(self):
@@ -151,6 +192,11 @@ class InteractiveAppItem(QGraphicsRectItem):
         self.app = app
         
     def set_color(self, is_selected):
+        """Sets color for this rectangle
+
+        Args:
+            is_selected (bool): is rectangle selected
+        """
         self.is_selected = is_selected
         if(self.is_selected):
             self.setBrush(QBrush(SELECTED_COLOR))

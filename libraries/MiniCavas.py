@@ -11,7 +11,15 @@ DOWN_BY = 10
 SIZE_OPTIONS = {"Full": 0, "Left": 1, "Right": 2, "Top": 3, "Bottom": 4, "Left_Top": 5, "Left_Bottom": 6, "Right_Top": 7, "Right_Bottom": 8}
 
 class MiniCanvas(QGraphicsView):
+    """Creates minicavas view for the ui and ux on size and type of the appview
+    """
     def __init__(self, option, monitor):
+        """Initializes minicanvas and what it would show for app's window
+
+        Args:
+            option (string): size option
+            monitor (Monitor): monitor  the the window would appear in
+        """
         super().__init__()
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
@@ -28,6 +36,8 @@ class MiniCanvas(QGraphicsView):
         self.draw_test_shapes()
 
     def draw_test_shapes(self):
+        """Draws the canvas and the graphics init
+        """
         if self.monitor:
             app_x, app_y, app_width, app_height = self.get_app_position()
             monitor_view = QGraphicsRectItem(0, 0, self.monitor.width // DOWN_BY, self.monitor.height // DOWN_BY)
@@ -39,6 +49,15 @@ class MiniCanvas(QGraphicsView):
             self.scene.addItem(monitor_view)
             self.scene.addItem(app_view)
     def get_app_position(self):
+        """get the size and position of app's window
+        and returns them with rescaling to fit the canvas
+
+        Returns:
+            number: x position
+            number: y position
+            number: width
+            number: height
+        """
         app_x = 0
         app_y = 0
         app_width = self.monitor.width

@@ -7,7 +7,19 @@ from libraries.Size import *
 
 DOWN_BY_CONST = 5
 class MonitorCanvas(QGraphicsView):
+    """Canvas view with interactions for the user's environment
+    """
     def __init__(self, screens, apps, update_panel_callback, drag_callback, resize_callback, delete_callback):
+        """Initiates canvas view object with all the environment's information
+
+        Args:
+            screens (list): list of all screens
+            apps (list): list of all the apps
+            update_panel_callback: update info panel function
+            drag_callback: position function for an app
+            resize_callback: resizing function for an app
+            delete_callback: deletion function for an app
+        """
         super().__init__()
         self.screens = screens
         self.apps = apps
@@ -45,6 +57,11 @@ class MonitorCanvas(QGraphicsView):
                 self.scene.addItem(app_view)
         
     def reset_app_view(self, app_selected):  
+        """restores canvas app view with an addition to selected app, for UI and UX
+
+        Args:
+            app_selected (App): App that is selected by the user
+        """
         max_items = len(self.scene.items())
         for z, view in enumerate(self.scene.items()):
             if(str(type(view)) == "<class \'libraries.InteractiveAppItem.InteractiveAppItem\'>"):
@@ -64,6 +81,11 @@ class MonitorCanvas(QGraphicsView):
                 view.set_color(view.find_app_item(app_selected))
     
     def delete_app_view(self, app_deleted):
+        """Deleting app view from the canvas and the infopanel
+
+        Args:
+            app_deleted (App): App that is deleted
+        """
         delete_view = None
         for view in self.scene.items():
             if(str(type(view)) == "<class \'libraries.InteractiveAppItem.InteractiveAppItem\'>"):
@@ -73,6 +95,11 @@ class MonitorCanvas(QGraphicsView):
             self.scene.removeItem(delete_view)
 
     def add_app_view(self, app_added):
+        """adding new app view 
+
+        Args:
+            app_added (App): App that is added
+        """
         size_obj = app_added.get_size()
         pos = app_added.get_pos()
         if(size_obj.get_is_list()):
@@ -81,6 +108,13 @@ class MonitorCanvas(QGraphicsView):
         self.scene.addItem(app_view)
     
     def get_bounds(self):
+        """Calculates all screens bounds for user interactions
+
+        Returns:
+            number: minimum x position
+            number: minimum y position
+            list: list of the bounds in abs value
+        """
         x_min, y_min = self.screens[0].x, self.screens[0].y
         x_max, y_max = self.screens[0].x + self.screens[0].width, self.screens[0].y + self.screens[0].height
         for monitor in self.screens:
@@ -91,6 +125,15 @@ class MonitorCanvas(QGraphicsView):
         return x_min, y_min, [0, (x_max - x_min) // DOWN_BY_CONST, 0, (y_max - y_min) // DOWN_BY_CONST]
 
     def find_screen(self, pos):
+        """Find screen index from a given position 
+        if it doesnt find any screen that the position init, then it returns -1
+
+        Args:
+            pos (list): position with x,y coordinates
+
+        Returns:
+            number: screen index
+        """
         for i, monitor in enumerate(self.screens):
             x, y, width, height  = monitor.x, monitor.y, monitor.width, monitor.height
             if (pos[0] >= x and pos[0] < x + width) and (pos[1] >= y and pos[1] < y + height):
@@ -98,6 +141,16 @@ class MonitorCanvas(QGraphicsView):
         return -1
     
     def change_app_view(self, app, x, y, width, height, screen):
+        """Changes canvas view for some app
+
+        Args:
+            app (App): app selected
+            x (number): x position
+            y (number): y position
+            width (number): width
+            height (number): height
+            screen (number): screen index
+        """
         monitor = self.screens[screen - 1]
         set_x = (x + monitor.x - self.x_min) // DOWN_BY_CONST
         set_y = (y + monitor.y - self.y_min) // DOWN_BY_CONST
@@ -113,6 +166,18 @@ class MonitorCanvas(QGraphicsView):
                     view.setZValue(z)
     
     def get_position_on_monitor(self, info, monitor):
+        """gets position and size values, after rescaling to fit the canvas
+
+        Args:
+            info (string): size information
+            monitor (Monitor): screen where the app sits in
+
+        Returns:
+            number: x position
+            number y position
+            number: width
+            number: height
+        """
         pos_x = monitor.x
         pos_y = monitor.y
         width = monitor.width
@@ -149,10 +214,14 @@ class MonitorCanvas(QGraphicsView):
         return (pos_x - self.x_min)//DOWN_BY_CONST, (pos_y- self.y_min)//DOWN_BY_CONST, (width)//DOWN_BY_CONST, (heigth)//DOWN_BY_CONST
     
     def pos_callback(self, app, real_x, real_y, is_moved):
+        """position callback function with rescaling
+        """
         if self.drag_callback:
             self.drag_callback(app, (real_x * DOWN_BY_CONST) + self.x_min , (real_y * DOWN_BY_CONST) + self.y_min, is_moved)
     
     def size_callback(self, app, new_width, new_height):
+        """resizing callback function with rescaling
+        """
         if self.resize_callback:
             self.resize_callback(app, int(new_width * DOWN_BY_CONST), int(new_height * DOWN_BY_CONST))
 

@@ -125,7 +125,19 @@ SIZE_STACK_OPTIONS = {"Full": 1, "Left": 2, "Right": 3, "Top": 4, "Bottom": 5, "
 SIZE_NANE_OPTIONS = ["Full", "Left", "Right", "Top", "Bottom", "Left_Top", "Left_Bottom", "Right_Top", "Right_Bottom"]
 
 class MainWindow(QMainWindow):
+    """Creates full window view for the ui and ux  of user's environment 
+    and has the backend code too
+    """
     def __init__(self, screens, apps, links, saving_file):
+        """Initiates the window with some basic usefull variables 
+        and all the widgets and usefull parts of the window
+
+        Args:
+            screens (list): list of all screens
+            apps (list): list of all env apps
+            links (list): list of all env links
+            saving_file (SavingFile): SavingFile of this application
+        """
         super().__init__()
         self.screens = screens
         self.apps = apps
@@ -378,6 +390,8 @@ class MainWindow(QMainWindow):
         self.toggle_info_panel()
         
     def toggle_info_panel(self):
+        """Opens or closes the info panel
+        """
         self.is_panel_open = not self.is_panel_open
         if not(self.is_panel_open):
             target_panel_width = 0
@@ -405,6 +419,11 @@ class MainWindow(QMainWindow):
         self.info_panel_toggle_btn.raise_()
         
     def update_info_panel(self, app): 
+        """updates info panel information to match the selected app or the edited app
+
+        Args:
+            app (App): app selected
+        """
         if not(self.activated_app) or self.activated_app != app:
             self.apps_title_label.setDisabled(False)
             self.panel_stack.setCurrentIndex(1)
@@ -444,6 +463,11 @@ class MainWindow(QMainWindow):
                 self.toggle_info_panel()
     
     def change_size_position(self, diff):
+        """Changes app size and position in the info panel from WINDOWS STATE widgets
+
+        Args:
+            diff (number): diff index change from all posible size options
+        """
         size_state = self.size_stack.currentIndex()
         max_state = len(SIZE_TITLE_OPTIONS)
         new_size_state = (size_state + diff) % max_state
@@ -473,6 +497,9 @@ class MainWindow(QMainWindow):
         self.height_spin.setValue(new_height)
 
     def live_update_canvas(self):
+        """Chenges app information inside the infopanel about size and position,
+        only from WINDOWS STATE and POSITION widgets
+        """
         if self.activated_app: 
             x = self.x_spin.value()
             y = self.y_spin.value()
@@ -485,6 +512,14 @@ class MainWindow(QMainWindow):
             self.size_stack_widgets[size_state - 1].set_monitor(monitor)
     
     def live_update_panel_from_drag(self, app, real_x, real_y, is_moved):
+        """Updates infopanel information after user interaction inside the canvas
+
+        Args:
+            app (App): App the got interacted 
+            real_x (number): new x position
+            real_y (number): new y position
+            is_moved (bool): is user mouse moved enough to change something?
+        """
         if self.activated_app == app:
             screen_index = self.find_screen([real_x, real_y])
             x = int(real_x - self.screens[screen_index].x)
@@ -506,6 +541,13 @@ class MainWindow(QMainWindow):
             self.screen_spin.blockSignals(False)
             
     def live_update_panel_from_resize(self, app, new_width, new_height):
+        """Updates infopanel information after user interaction inside the canvas
+
+        Args:
+            app (App): App that got interacted
+            new_width (number): new width
+            new_height (number): new height
+        """
         if self.activated_app == app:
             self.can_be_edited(True)
             self.size_stack.setCurrentIndex(0)
@@ -518,6 +560,8 @@ class MainWindow(QMainWindow):
             self.height_spin.blockSignals(False)
             
     def change_app_up(self):
+        """Changes app from the infopanel and then changes all ui
+        """
         if not self.activated_app:
             if self.apps:
                 if(len(self.apps) > 0):
@@ -533,6 +577,8 @@ class MainWindow(QMainWindow):
                 self.update_info_panel(self.apps[(index + 1) % app_count])
     
     def change_app_down(self):
+        """Changes app from the infopanel and then changes all ui
+        """
         if not self.activated_app:
             if self.apps:
                 if(len(self.apps) > 0):
@@ -548,6 +594,11 @@ class MainWindow(QMainWindow):
                 self.update_info_panel(self.apps[(index - 1) % app_count])
                 
     def handle_deleting_app(self, deleted_app):
+        """deleting app function from canvas interaction
+
+        Args:
+            deleted_app (App): app deleted
+        """
         if not self.activated_app == deleted_app:
             info_panel_state = self.panel_stack.currentIndex()
             self.update_info_panel(deleted_app)
@@ -556,6 +607,8 @@ class MainWindow(QMainWindow):
         self.deleting_app()
                       
     def browse_for_executable(self) :
+        """browse inside user's computer folders and opening all items that arent folders, for app's path
+        """
         if self.activated_app:
             path = self.activated_app.get_app_path()
             options = QFileDialog.Option.DontResolveSymlinks
@@ -576,6 +629,8 @@ class MainWindow(QMainWindow):
                     self.app_path_input.setText(normalized_path)
     
     def browse_for_folder(self) :
+        """browse inside user's computer folders and opening only folders, for app's path
+        """
         if self.activated_app:
             path = self.activated_app.get_app_path_folder()
             file_path = QFileDialog.getExistingDirectory(
@@ -589,6 +644,8 @@ class MainWindow(QMainWindow):
                 self.apps_title_label.setText(normalized_path)
     
     def saving_app(self):
+        """Saving information from the info panel and the canvas inside the app itself and SavingFile object
+        """
         if self.activated_app:
             name = self.apps_title_label.toPlainText().lower()
             path = self.app_path_input.text().strip()
@@ -607,6 +664,8 @@ class MainWindow(QMainWindow):
             self.writing_file()
         
     def deleting_app(self):
+        """deleting app from the info panel and the canvas inside SavingFile object and updating apps list
+        """
         if self.activated_app:
             index = 0
             while(index < len(self.apps)):
@@ -625,6 +684,8 @@ class MainWindow(QMainWindow):
             self.writing_file()
     
     def create_new_app(self):
+        """Creating and adding new app with basic information for the user to change and save
+        """
         if(not self.apps or len(self.apps) < 32):
             name = self.get_new_name()
             path = "c:\\"
@@ -642,8 +703,7 @@ class MainWindow(QMainWindow):
             self.writing_file()
         else:
             QMessageBox.warning(self, "Overflow", "Too much apps getting opened\nWhen the pc is starting up")
-            
-                
+                           
     def get_links_list(self):
         return f"{str(self.links)}"
     
@@ -653,6 +713,15 @@ class MainWindow(QMainWindow):
                 return monitor
         
     def find_screen(self, pos):
+        """Finds screen index from a position, 
+        if it didnt find matching screen for the position itll return -1
+
+        Args:
+            pos (list): position list
+
+        Returns:
+            number: index of screen
+        """
         for i, monitor in enumerate(self.screens):
             x, y, width, height  = monitor.x, monitor.y, monitor.width, monitor.height
             if (pos[0] >= x and pos[0] < x + width) and (pos[1] >= y and pos[1] < y + height):
@@ -660,6 +729,14 @@ class MainWindow(QMainWindow):
         return -1
     
     def get_name_from_path(self, path):
+        """Gets app's name from the path that was selected
+
+        Args:
+            path (string): selected apth
+
+        Returns:
+            string: name of the app
+        """
         path_list = path.split("\\")
         if(len(path_list) <= 1):
             return -1, self.activated_app.get_name()
@@ -671,6 +748,12 @@ class MainWindow(QMainWindow):
         return 0, "explorer"
     
     def get_max_border(self):
+        """Calculates max values for x and y positions on the screen
+
+        Returns:
+            number: max x value
+            number: max y value
+        """
         min_x = self.screens[0].x
         max_x = self.screens[0].width + self.screens[0].x
         min_y = self.screens[0].y
@@ -683,6 +766,9 @@ class MainWindow(QMainWindow):
         return max_x - min_x, max_y - min_y
     
     def add_new_link(self):
+        """Creates and adds new link with name and link itself, then adds it to the ui inside infopanel
+        and saves it in the SavingFile
+        """
         link_name = self.link_name_input.text().strip()
         link_link = self.link_link_input.text().strip()
         if not link_name or not link_link:
@@ -699,6 +785,11 @@ class MainWindow(QMainWindow):
             self.writing_file()
 
     def delete_link(self, block_widget):
+        """Deleting link from link list, link infopanel and changes the SavingFile
+
+        Args:
+            block_widget (LinkBlock): link block that is deleted
+        """
         link_deleted = block_widget.get_link()
         self.link_list_layout.removeWidget(block_widget)
         block_widget.deleteLater()
@@ -713,6 +804,8 @@ class MainWindow(QMainWindow):
         self.writing_file()
     
     def add_existing_links(self):
+        """Addes all existing links from links list to the infopanel as widgets
+        """
         if self.links:
             for link in self.links:
                 existing_block = LinkBlock(link, self.delete_link)
@@ -721,6 +814,11 @@ class MainWindow(QMainWindow):
                 self.link_link_input.clear()
     
     def get_new_name(self):
+        """Created new basic different name for new app that is created
+
+        Returns:
+            string: new different name
+        """
         n = 0
         if self.apps:
             while(n < len(self.apps)):
@@ -740,19 +838,48 @@ class MainWindow(QMainWindow):
         if n == 0:
             return "new_app"
         return f"new_app({n})"
-    
-    
+        
     def create_header(self, text):
+        """Creates header label for infopanel 
+
+        Args:
+            text (string): text for header label
+
+        Returns:
+            QLabel: header label
+        """
         lbl = QLabel(text)
         lbl.setStyleSheet(HEADER_STYLE)
         return lbl
 
     def calculate_pos(self, screen, x, y):
+        """Calculates position of an app from its positioned screen
+
+        Args:
+            screen (number): screen index 
+            x (number): x position inside the screen
+            y (number): y position inside the screen
+
+        Returns:
+            list: position list
+        """
         monitor = self.screens[screen]
         pos = [x + monitor.x, y + monitor.y]
         return pos
 
     def get_position_on_monitor(self, info, monitor):
+        """Calculates from size information string the position, width and height inside positioned screen
+
+        Args:
+            info (string): size information
+            monitor (Monitor): positioned screen
+
+        Returns:
+            number: x position inside the screen
+            number: y position inside the screen
+            number: width
+            number: height
+        """
         pos_x = 0
         pos_y = 0
         width = monitor.width
@@ -789,9 +916,17 @@ class MainWindow(QMainWindow):
         return (pos_x), (pos_y), (width), (heigth)
     
     def can_be_edited(self, state):
+        """Sets some widgets to readonly for better ux
+
+        Args:
+            state (bool): can you edit?
+        """
         self.x_spin.setDisabled(not state)
         self.y_spin.setDisabled(not state)
         self.width_spin.setDisabled(not state)
         self.height_spin.setDisabled(not state)
+   
     def writing_file(self):
+        """Saves information about the environment inside SavingFile
+        """
         self.saving_file.write_file(self.apps, self.links)

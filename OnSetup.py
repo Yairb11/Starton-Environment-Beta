@@ -23,10 +23,20 @@ SW_MAXIMIZE = 3
 SW_RESTORE = 9
 
 def find_number_of_screens():
+    """returns number of monitors that are connected to the computer
+
+    Returns:
+        number: number of monitors that are connected to the computer
+    """
     monitors = get_monitors()
     return len(monitors)
 
 def find_screen_combination():
+    """finds each monitor layout for saving them(L - landscape, P - portrait)
+
+    Returns:
+        string: all monitor layouts
+    """
     combination = ""
     monitors = get_monitors()
     for _, monitor in enumerate(monitors):
@@ -37,6 +47,12 @@ def find_screen_combination():
     return combination
 
 def get_full_spcae():
+    """Gets full information about all the monitors
+
+    Returns:
+        list: list of all monitors information
+        list: list of all monitors work space
+    """
     screens = []
     monitors = get_monitors()
     for _, monitor in enumerate(monitors):
@@ -55,18 +71,33 @@ def get_full_spcae():
     return screens, work_areas
 
 def find_screen(monitors, pos):
+    """Find monitor with this position input,
+    if it doesnt fines the monitor, then it returns -1
+
+    Args:
+        monitors (list): list of all monitors
+        pos (list): position list, width and height
+
+    Returns:
+        number: index of the monitor from the monitor list
+    """
     for i, monitor in enumerate(monitors):
         x, y, width, height  = monitor.x, monitor.y, monitor.width, monitor.height
         if (pos[0] >= x and pos[0] < x + width) and (pos[1] >= y and pos[1] < y + height):
             return i
     return -1
 
-def window_name_for(path):
-    if(path[-2] == ":"):
-        return f"{path} - File Explorer".lower()
-    return f"{path[:-1]} - File Explorer".lower()
-
 def get_all_visible_windows():
+    """
+    Retrieves a collection of handles for all visible top-level windows.
+
+    This function utilizes the Windows API (via ctypes) to enumerate all top-level
+    windows currently on the screen. It applies a filter to ensure only windows 
+    that are both visible to the user and have an assigned window title are captured.
+
+    Returns:
+        set: A set containing the integer handles (HWND) of the visible windows.
+    """
     hwnds = set()
     def callback(hwnd, lParam):
         if user32.IsWindowVisible(hwnd) and user32.GetWindowTextLengthW(hwnd) > 0:
@@ -76,11 +107,32 @@ def get_all_visible_windows():
     return hwnds
 
 def open_urls(links):
+    """Opens all links from list of links
+
+    Args:
+        links (list): list of links
+    """
     for link in links:
         webbrowser.open(link.get_link())
         time.sleep(0.1)
                          
 def get_position_and_size(pos, size_obj, screens, workspaces):
+    """Calculates the numerical values of screen position and size,
+    returns this values and bool statement for if this size is a fullscreen or not
+
+    Args:
+        pos (list): list with x,y number that represent position
+        size_obj (Size): size of the window
+        screens (list): Screen list of all screens
+        workspaces (list): Screen list of all workingspace of each screen
+
+    Returns:
+        number: x position
+        number: y position
+        number: widht
+        number: height
+        bool: is it fullscreen
+    """
     size = size_obj.get_size()
     if size_obj.get_is_list():
         return pos[0] , pos[1], size[0], size[1], False
@@ -125,6 +177,14 @@ def get_position_and_size(pos, size_obj, screens, workspaces):
     return pos_x, pos_y, width, height, False
 
 def launch_and_resize(screens, workspaces, app,  timeout = 10):
+    """launches, resizes and positions an app.
+
+    Args:
+        screens (list): list of all monitors information
+        workspaces (list): list of all monitors work space
+        app (App): app that will be opened
+        timeout (int, optional): number of seconds for waiting until the upp is appened(if not, it'll moveon). Defaults to 10.
+    """
     file_path = app.get_app_path()
     pos = app.get_pos()
     size_obj = app.get_size()
@@ -153,11 +213,22 @@ def launch_and_resize(screens, workspaces, app,  timeout = 10):
         user32.MoveWindow(new_hwnd, int(x), int(y), int(width), int(height), True)
     
 def open_apps(apps): 
+    """opens all apps from the apps list, resizes them and positions them
+
+    Args:
+        apps (list): list of apps
+    """
     screens, workspaces = get_full_spcae()
     for app in apps:
         launch_and_resize(screens, workspaces, app)
 
 def is_first_time():
+    """Checks if this is the first time using this application, then creates the basic structure for this app to work
+    and returns path for setup environment information text file
+
+    Returns:
+        string: path for setup environment information text file
+    """
     if getattr(sys, 'frozen', False):
         project_dit = Path(sys.executable).parent.resolve()
     else:
@@ -173,7 +244,8 @@ def is_first_time():
     return setup_info_path 
         
                        
-def on_start():       
+def on_start():
+    """Runs the program"""
     file_path = is_first_time()
     print("Opening applications...")
     savingFile = SavingFile(file_path)
@@ -186,4 +258,5 @@ def on_start():
     print("Finished")
        
 if __name__ == "__main__":
+
     on_start()

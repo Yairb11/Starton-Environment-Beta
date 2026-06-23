@@ -1,6 +1,22 @@
 from libraries.Size import *
 class App:
+    """Stores information about the app that would be oppend on setup environment\
+    
+    Attributes:
+        name(string): name of the app
+        app_path(string): path to the app
+        pos(list): list of the position of the window on the screen
+        size(Size): size of the window on the screen
+    """
     def __init__(self, name, path = "", pos = [0, 0], size = Size([0,0])):
+        """Initializes app information
+
+        Args:
+            name(string): name of the app
+            app_path(string): path to the app
+            pos(list): list of the position of the window on the screen
+            size(Size, optional): size of the window on the screen. Defaults to Size([0,0]).
+        """
         self.name = name
         self.app_path = path
         self.pos = pos
@@ -32,6 +48,14 @@ class App:
         return f"<app>\n{self.name}\n{self.app_path}\n{pos_str}\n{str(self.size)}\n</app>"
     
     def change_app(self, name, app_path, pos, size):
+        """Changes information about the app
+
+        Args:
+            name(string): name of the app
+            app_path(string): path to the app
+            pos(list): list of the position of the window on the screen
+            size(Size): size of the window on the screen
+        """
         self.name = name
         self.app_path = app_path
         self.pos = []
@@ -45,11 +69,21 @@ class App:
         return str(self) == str(other)
     
     def is_folder(self):
+        """Checks if the app is a folder
+
+        Returns:
+            bool: if the app is a folder
+        """
         if(self.app_path[-1] == "\\"):
             return True
         return False
     
     def get_app_path_folder(self):
+        """Gets the folder that the app sits in
+
+        Returns:
+            string: folder path
+        """
         if self.is_folder():
             return self.app_path
         folders = self.app_path.split("\\")[:-1]
